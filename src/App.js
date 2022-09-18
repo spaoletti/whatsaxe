@@ -28,6 +28,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
+        { user && <SignOut/> }
       </header>
       <section>
         { user ? <GameRoom/> : <SignIn/> }
