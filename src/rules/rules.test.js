@@ -1,12 +1,4 @@
-/*
-GAME LOOP
-
-1. Only DM can write the first message (Prompt). Players are blocked.
-2. Both players and DM can chat. Player can post an Action. All chat Messages are deleted.
-3. Back to 1. Prompt is now called an Outcome.
-*/
-
-import { DungeonMaster, GameRoom, PlayerCharacter } from "./classes";
+import { DungeonMaster, GameRoom, PlayerCharacter } from "./rules";
 
 let gameRoom;
 let dm;
@@ -65,4 +57,16 @@ test('after a player\'s action, only the DM can post a Prompt', () => {
     expect(messages[0].text).toBe("prompt");
     expect(messages[1].text).toBe("action!");
     expect(messages[2].text).toBe("prompt 2");
+});
+
+test('after a player\'s action, chat messages are deleted', () => {
+    dm.postPrompt("prompt");
+    player2.postMessage("message");
+    player2.postMessage("message");
+    player1.postAction("action!");
+
+    let messages = gameRoom.messages;
+    expect(messages.length).toBe(2);
+    expect(messages[0].text).toBe("prompt");
+    expect(messages[1].text).toBe("action!");
 });

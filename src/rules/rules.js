@@ -1,18 +1,18 @@
-const GamePhases = {
-    DmTurn: 0,
-    PlayersTurn: 1
+const Phases = {
+    Dm: 0,
+    Players: 1
 }
 
 const MessageTypes = {
-    DmPrompt: 0,
-    PlayerChat: 1,
-    PlayerAction: 2
+    Prompt: 0,
+    Chat: 1,
+    Action: 2
 }
 
 export class GameRoom {
 
     messages;
-    gamePhase = GamePhases.DmTurn;
+    gamePhase = Phases.Dm;
 
     constructor(messages) {
         this.messages = messages;
@@ -20,19 +20,24 @@ export class GameRoom {
 
     send(message) {
         switch (this.gamePhase) {
-            case GamePhases.DmTurn:
-                if (message.type == MessageTypes.DmPrompt) {
+            case Phases.Dm:
+                if (message.type == MessageTypes.Prompt) {
                     this.messages.push(message);
-                    this.gamePhase = GamePhases.PlayersTurn;        
+                    this.gamePhase = Phases.Players;        
                 }
                 break;
-            case GamePhases.PlayersTurn:
-                if (message.type == MessageTypes.PlayerAction) {
-                    this.gamePhase = GamePhases.DmTurn;
+            case Phases.Players:
+                if (message.type == MessageTypes.Action) {
+                    this.#removeChats();
+                    this.gamePhase = Phases.Dm;
                 }
                 this.messages.push(message);
                 break;
         }
+    }
+
+    #removeChats() {
+        this.messages = this.messages.filter(m => m.type != MessageTypes.Chat);
     }
 
 }
@@ -58,7 +63,7 @@ class Player {
     }
 
     postMessage(message) {
-        this.gameRoom.send(new Message(MessageTypes.PlayerChat, message));
+        this.gameRoom.send(new Message(MessageTypes.Chat, message));
     }
 
     isDM() {
@@ -70,7 +75,7 @@ class Player {
 export class PlayerCharacter extends Player {
 
     postAction(message) {
-        this.gameRoom.send(new Message(MessageTypes.PlayerAction, message));
+        this.gameRoom.send(new Message(MessageTypes.Action, message));
     }
 
 }
@@ -78,7 +83,7 @@ export class PlayerCharacter extends Player {
 export class DungeonMaster extends Player {
 
     postPrompt(message) {
-        this.gameRoom.send(new Message(MessageTypes.DmPrompt, message));
+        this.gameRoom.send(new Message(MessageTypes.Prompt, message));
     }
 
     isDM() {
