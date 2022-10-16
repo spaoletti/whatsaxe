@@ -68,6 +68,8 @@ body {
   form button {
     width: 20%;
     background-color: rgb(56, 56, 143);
+    border: 1px solid;
+    border-color: black;
   }
   
   

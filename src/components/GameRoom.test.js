@@ -12,6 +12,14 @@ let mockedFirestore = []
 
 window.HTMLElement.prototype.scrollIntoView = function() {};
 
+const firebase = {
+  firestore: {
+    FieldValue: {
+      serverTimestamp: () => "timestamp"
+    }
+  }
+}
+
 const firestore = {
   collection: () => ({
     orderBy: () => ({
@@ -21,10 +29,7 @@ const firestore = {
       addMessage(doc);
       return Promise.resolve();
     }
-  }),
-  FieldValue: {
-    serverTimestamp: () => "timestamp"
-  }
+  })
 };
 
 const auth = {
@@ -35,14 +40,14 @@ const auth = {
 
 test('should render', () => {
   setMessages([])
-  render(<GameRoom firestore={firestore} auth={auth}/>)
+  render(<GameRoom firebase={firebase} firestore={firestore} auth={auth}/>)
 });
 
 test('if there are no messages the DM should be able to write a Chat', async () => {
   setMessages([]);
   setRole("DM");
   
-  render(<GameRoom firestore={firestore} auth={auth}/>);
+  render(<GameRoom firebase={firebase} firestore={firestore} auth={auth}/>);
   userEvent.type(screen.getByTestId("text"), "A message!");
   userEvent.click(screen.getByTestId("send"));
   
@@ -56,7 +61,7 @@ test('if there are no messages the player should be able to write a Chat', async
   setMessages([]);
   setRole("Player");
   
-  render(<GameRoom firestore={firestore} auth={auth}/>);
+  render(<GameRoom firebase={firebase} firestore={firestore} auth={auth}/>);
   userEvent.type(screen.getByTestId("text"), "A message!");
   userEvent.click(screen.getByTestId("send"));
   
@@ -66,8 +71,19 @@ test('if there are no messages the player should be able to write a Chat', async
   expect(mockedFirestore[0].type).toBe("chat");
 });
 
-// test('if there are no messages the DM should be able to write a Prompt', () => {
-// });
+test('if there are no messages the DM should be able to write a Prompt', async () => {
+  setMessages([]);
+  setRole("DM");
+  
+  render(<GameRoom firebase={firebase} firestore={firestore} auth={auth}/>);
+  userEvent.type(screen.getByTestId("text"), "A prompt!");
+  userEvent.click(screen.getByTestId("send-prompt"));
+  
+  let messages = await screen.findAllByTestId("message");
+
+  expect(messages.length).toBe(1);
+  expect(mockedFirestore[0].type).toBe("prompt");
+});
 
 // test('if there are no messages the player should not be able to write an Action', () => {
 // });

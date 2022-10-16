@@ -33,7 +33,7 @@ function App() {
         {user && <SignOut auth={auth} />}
       </header>
       <section>
-        {user ? <GameRoom firestore={firestore} auth={auth} /> : <SignIn auth={auth} />}
+        {user ? <GameRoom firebase={firebase} firestore={firestore} auth={auth} /> : <SignIn auth={auth} />}
       </section>
     </div>
   );
