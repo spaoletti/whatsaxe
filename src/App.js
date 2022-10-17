@@ -36,7 +36,18 @@ function App() {
         {user && <SignOut auth={auth} />}
       </header>
       <section>
-        {user ? <GameRoom firebase={firebase} firestore={firestore} auth={auth} /> : <SignIn auth={auth} />}
+        {
+          user ? 
+            <GameRoom 
+              firebase={firebase} 
+              firestore={firestore} 
+              auth={auth} 
+            /> 
+          : 
+            <div>
+              <SignIn auth={auth} />
+            </div>
+        }
       </section>
     </div>
   );
