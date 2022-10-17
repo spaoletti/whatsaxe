@@ -31,7 +31,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <div className='logo'>
-          <img src="./whatsaxe.png" /><div>WhatsAxe</div>
+          <img alt='whatsxxe' src="./whatsaxe.png" /><div>WhatsAxe</div>
         </div>
         {user && <SignOut auth={auth} />}
       </header>

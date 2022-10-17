@@ -3,7 +3,7 @@ export default function ChatMessage(props) {
   const messageClass = uid === props.auth.currentUser.uid ? "sent" : "received";
   return (
     <div data-testid="message" className={`message ${messageClass}`}>
-      <img src={photoURL} />
+      <img alt="avatar" src={photoURL} />
       <p>{text}</p>
     </div>
   )

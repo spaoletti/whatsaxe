@@ -8,7 +8,7 @@ export default function GameRoom(props) {
   const query = messagesRef.orderBy("createdAt").limit(100);
   const [messages] = useCollectionData(query);
   const [formValue, setFormValue] = useState("");
-  const [isDM, setIsDM] = useState(props.auth.currentUser.uid == "78OjG96RrtZi5J3vqUChlmIdL503");  
+  const [isDM, setIsDM] = useState(props.auth.currentUser.uid === "78OjG96RrtZi5J3vqUChlmIdL503");  
 
   const sendMessage = async (messageType) => {
     const { uid, photoURL } = props.auth.currentUser;
