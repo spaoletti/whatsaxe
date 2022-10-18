@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { act } from "react-dom/test-utils";
 import 'react-firebase-hooks/firestore';
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import GameRoom from "./GameRoom";
@@ -28,7 +29,20 @@ const firestore = {
     add: (doc) => {
       addMessage(doc);
       return Promise.resolve();
-    }
+    },
+    where: () => ({
+      get: () => {
+        const objectsToDelete = mockedFirestore.filter(doc => doc.type === "chat");
+        for (const objToDelete of objectsToDelete) {
+          objToDelete.ref = {
+            delete: () => {
+              mockedFirestore = mockedFirestore.filter(doc => doc !== objToDelete);
+            }
+          }
+        }
+        return Promise.resolve(objectsToDelete);
+      }
+    })
   })
 };
 
@@ -36,70 +50,66 @@ const user = {
   uid: ""
 };
 
-test('should render', () => {
-  setMessages([])
+beforeEach(() => {
+  setMessages([]);
   render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>)
 });
 
 test('if there are no messages the DM should be able to write a Chat', async () => {
-  setMessages([]);
   setRole("DM");
-  
-  render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>);
-  userEvent.type(screen.getByTestId("text"), "A message!");
-  userEvent.click(screen.getByTestId("send"));
-  
-  let messages = await screen.findAllByTestId("message");
 
+  await sendChat("A message!");
+
+  let messages = await screen.findAllByTestId("message");
   expect(messages.length).toBe(1);
   expect(mockedFirestore[0].type).toBe("chat");
 });
 
 test('if there are no messages the player should be able to write a Chat', async () => {
-  setMessages([]);
-  setRole("Player");
-  
-  render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>);
-  userEvent.type(screen.getByTestId("text"), "A message!");
-  userEvent.click(screen.getByTestId("send"));
+  setRole("Player");  
+
+  await sendChat("A message!");
   
   let messages = await screen.findAllByTestId("message");
-
   expect(messages.length).toBe(1);
   expect(mockedFirestore[0].type).toBe("chat");
 });
 
-test('if there are no messages the DM should be able to write a Prompt', async () => {
-  setMessages([]);
+test('if there are no messages the DM should be able to write an Action', async () => {
   setRole("DM");
   
-  render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>);
-  userEvent.type(screen.getByTestId("text"), "A prompt!");
-  userEvent.click(screen.getByTestId("send-prompt"));
-  
-  let messages = await screen.findAllByTestId("message");
+  await sendAction("An action!");
 
+  let messages = await screen.findAllByTestId("message");
   expect(messages.length).toBe(1);
-  expect(mockedFirestore[0].type).toBe("prompt");
+  expect(mockedFirestore[0].type).toBe("action");
 });
 
 test('if there are no messages the player should not be able to write an Action', async () => {
-  setMessages([]);
   setRole("Player");
 
-  render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>);
-  userEvent.type(screen.getByTestId("text"), "A message!");
-  userEvent.click(screen.getByTestId("send-prompt"));
+  await sendAction("An action!");
 
   let noMessages = false;
   try {
     await screen.findAllByTestId("message");
   } catch (e) {
     noMessages = true;
-  }
-  
+  }  
   expect(noMessages).toBeTruthy();
 });
+
+test('after an Action is sent, all Chats are deleted', async () => {
+  setRole("DM");
+
+  await sendChat("Here's a message");
+  await sendChat("Here's another");
+  await sendAction("And an action");
+
+  let messages = await screen.findAllByTestId("message");
+  expect(messages.length).toBe(1);
+  expect(mockedFirestore[0].type).toBe("action");
+})
 
 function setMessages(messages) {
   mockedFirestore = messages;
@@ -118,3 +128,13 @@ function setRole(role) {
     user.uid = "abc";
   }
 }
+
+const sendChat = async (text) => act(async () => { 
+  userEvent.type(screen.getByTestId("text"), text);
+  userEvent.click(screen.getByTestId("send"));
+});
+
+const sendAction = async (text) => act(async () => { 
+  userEvent.type(screen.getByTestId("text"), text);
+  userEvent.click(screen.getByTestId("send-action"));
+});

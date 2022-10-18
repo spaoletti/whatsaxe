@@ -1,5 +1,5 @@
 import './App.css'
-import React, { useState } from 'react';
+import React from 'react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import 'firebase/compat/auth';
@@ -32,7 +32,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <div className='logo'>
-          <img alt='whatsxxe' src="./whatsaxe.png" /><div>WhatsAxe</div>
+          <img alt='whatsaxe' src="./whatsaxe.png" /><div>WhatsAxe</div>
         </div>
         {user && isDM(user) && <div>You are the DM</div>}
         {user && <SignOut auth={auth} />}
