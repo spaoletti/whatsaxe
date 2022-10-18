@@ -26,8 +26,9 @@ export default function GameRoom(props) {
       uid,
       photoURL,
       type: messageType
+    }).then(() => {
+      bottom.current.scrollIntoView();
     });
-    bottom.current.scrollIntoView();
   }
 
   return (
@@ -52,7 +53,7 @@ export default function GameRoom(props) {
           Chat
         </button>
         <button 
-          disabled={!isDM(props.user) && messages.length === 0} 
+          disabled={!isDM(props.user) && (!messages || messages.length === 0)} 
           onClick={() => sendMessage("action")} 
           data-testid="send-action" 
           type="button"
