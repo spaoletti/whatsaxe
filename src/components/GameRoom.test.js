@@ -32,22 +32,20 @@ const firestore = {
   })
 };
 
-const auth = {
-  currentUser: {
-    uid: ""
-  }
+const user = {
+  uid: ""
 };
 
 test('should render', () => {
   setMessages([])
-  render(<GameRoom firebase={firebase} firestore={firestore} auth={auth}/>)
+  render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>)
 });
 
 test('if there are no messages the DM should be able to write a Chat', async () => {
   setMessages([]);
   setRole("DM");
   
-  render(<GameRoom firebase={firebase} firestore={firestore} auth={auth}/>);
+  render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>);
   userEvent.type(screen.getByTestId("text"), "A message!");
   userEvent.click(screen.getByTestId("send"));
   
@@ -61,7 +59,7 @@ test('if there are no messages the player should be able to write a Chat', async
   setMessages([]);
   setRole("Player");
   
-  render(<GameRoom firebase={firebase} firestore={firestore} auth={auth}/>);
+  render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>);
   userEvent.type(screen.getByTestId("text"), "A message!");
   userEvent.click(screen.getByTestId("send"));
   
@@ -75,7 +73,7 @@ test('if there are no messages the DM should be able to write a Prompt', async (
   setMessages([]);
   setRole("DM");
   
-  render(<GameRoom firebase={firebase} firestore={firestore} auth={auth}/>);
+  render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>);
   userEvent.type(screen.getByTestId("text"), "A prompt!");
   userEvent.click(screen.getByTestId("send-prompt"));
   
@@ -85,8 +83,23 @@ test('if there are no messages the DM should be able to write a Prompt', async (
   expect(mockedFirestore[0].type).toBe("prompt");
 });
 
-// test('if there are no messages the player should not be able to write an Action', () => {
-// });
+test('if there are no messages the player should not be able to write an Action', async () => {
+  setMessages([]);
+  setRole("Player");
+
+  render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>);
+  userEvent.type(screen.getByTestId("text"), "A message!");
+  userEvent.click(screen.getByTestId("send-prompt"));
+
+  let noMessages = false;
+  try {
+    await screen.findAllByTestId("message");
+  } catch (e) {
+    noMessages = true;
+  }
+  
+  expect(noMessages).toBeTruthy();
+});
 
 function setMessages(messages) {
   mockedFirestore = messages;
@@ -100,8 +113,8 @@ function addMessage(message) {
 
 function setRole(role) {
   if (role == "DM") {
-    auth.currentUser.uid = "78OjG96RrtZi5J3vqUChlmIdL503";
+    user.uid = "78OjG96RrtZi5J3vqUChlmIdL503";
   } else {
-    auth.currentUser.uid = "abc";
+    user.uid = "abc";
   }
 }

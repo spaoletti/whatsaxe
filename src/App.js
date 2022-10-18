@@ -1,5 +1,5 @@
 import './App.css'
-import React from 'react';
+import React, { useState } from 'react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import 'firebase/compat/auth';
@@ -8,6 +8,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import SignIn from './components/SignIn';
 import SignOut from './components/SignOut';
 import GameRoom from './components/GameRoom';
+import { isDM } from './utils';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC6J82sRFdawN4miLvzcKKtAfSvG11k1t8",
@@ -33,6 +34,7 @@ function App() {
         <div className='logo'>
           <img alt='whatsxxe' src="./whatsaxe.png" /><div>WhatsAxe</div>
         </div>
+        {user && isDM(user) && <div>You are the DM</div>}
         {user && <SignOut auth={auth} />}
       </header>
       <section>
@@ -41,7 +43,7 @@ function App() {
             <GameRoom 
               firebase={firebase} 
               firestore={firestore} 
-              auth={auth} 
+              user={user} 
             /> 
           : 
             <div>

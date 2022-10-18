@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useCollectionData } from "react-firebase-hooks/firestore";
+import { isDM } from "../utils";
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
@@ -8,10 +9,12 @@ export default function GameRoom(props) {
   const query = messagesRef.orderBy("createdAt").limit(100);
   const [messages] = useCollectionData(query);
   const [formValue, setFormValue] = useState("");
-  const [isDM, setIsDM] = useState(props.auth.currentUser.uid === "78OjG96RrtZi5J3vqUChlmIdL503");  
 
   const sendMessage = async (messageType) => {
-    const { uid, photoURL } = props.auth.currentUser;
+    const { uid, photoURL } = props.user;
+    if (!isDM(props.user) && messages.length == 0 && messageType == "prompt") {
+      return;
+    }
     await messagesRef.add({
       text: formValue,
       createdAt: props.firebase.firestore.FieldValue.serverTimestamp(),
@@ -26,7 +29,7 @@ export default function GameRoom(props) {
   return (
     <>
       <main>
-        {messages && messages.map((msg, idx) => <ChatMessage key={idx} message={msg} auth={props.auth} />)}
+        {messages && messages.map((msg, idx) => <ChatMessage key={idx} message={msg} user={props.user} />)}
         <div ref={bottom}></div>
       </main>
       <form>
