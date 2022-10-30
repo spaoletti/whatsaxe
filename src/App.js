@@ -32,9 +32,9 @@ function App() {
     <div className="App">
       <header className="App-header">
         <Menu>
-          <a href='/'>Game room</a>
-          <a href='/'>Character sheet</a>
-          <a href='/'>Inventory</a>
+          <div>Game room</div>
+          <div>Character sheet</div>
+          <div>Inventory</div>
         </Menu>
         <div className='logo'>
           <img alt='whatsaxe' src="./whatsaxe.png" /><div>WhatsAxe</div>
