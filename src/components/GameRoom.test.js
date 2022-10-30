@@ -55,9 +55,11 @@ beforeEach(() => {
   render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>)
 });
 
-test('if there are no messages the DM should be able to write a Chat', async () => {
-  setRole("DM");
-
+test.each([
+  ["DM"], 
+  ["Player"]
+])('if there are no messages the %p should be able to write a Chat', async (role) => {
+  setRole(role);
   await sendChat("A message!");
 
   let messages = await screen.findAllByTestId("message");
@@ -65,19 +67,8 @@ test('if there are no messages the DM should be able to write a Chat', async () 
   expect(mockedFirestore[0].type).toBe("chat");
 });
 
-test('if there are no messages the player should be able to write a Chat', async () => {
-  setRole("Player");  
-
-  await sendChat("A message!");
-  
-  let messages = await screen.findAllByTestId("message");
-  expect(messages.length).toBe(1);
-  expect(mockedFirestore[0].type).toBe("chat");
-});
-
-test('if there are no messages the DM should be able to write an Action', async () => {
+test('if there are no messages the DM should be able to declare an Action', async () => {
   setRole("DM");
-  
   await sendAction("An action!");
 
   let messages = await screen.findAllByTestId("message");
@@ -85,9 +76,8 @@ test('if there are no messages the DM should be able to write an Action', async 
   expect(mockedFirestore[0].type).toBe("action");
 });
 
-test('if there are no messages the player should not be able to write an Action', async () => {
+test('if there are no messages the player should NOT be able to declare an Action', async () => {
   setRole("Player");
-
   await sendAction("An action!");
 
   let noMessages = false;
@@ -99,17 +89,48 @@ test('if there are no messages the player should not be able to write an Action'
   expect(noMessages).toBeTruthy();
 });
 
-test('after an Action is sent, all Chats are deleted', async () => {
+test.each([
+  ["DM"], 
+  ["Player"]
+])('after an Action is sent by the %p, all Chats are deleted', async (role) => {
   setRole("DM");
-
+  await sendAction("Incipit!");
+  setRole(role);
   await sendChat("Here's a message");
   await sendChat("Here's another");
   await sendAction("And an action");
 
-  let messages = await screen.findAllByTestId("message");
-  expect(messages.length).toBe(1);
+  const messages = await screen.findAllByTestId("message");
+  expect(messages.length).toBe(2);
   expect(mockedFirestore[0].type).toBe("action");
-})
+  expect(mockedFirestore[1].type).toBe("action");
+});
+
+test("A player should NOT be able to declare an Action without a previous Action from the DM", async () => {
+  setRole("Player");
+  await sendChat("Here's a message from player");
+  setRole("DM");
+  await sendChat("Here's a message from DM");
+  setRole("Player");
+  await sendAction("Here's an Action from the player");
+
+  const messages = await screen.findAllByTestId("message");
+  expect(messages.length).toBe(2);
+  expect(mockedFirestore[0].type).toBe("chat");
+  expect(mockedFirestore[1].type).toBe("chat");
+});
+
+test("A player should be able to declare an Action after an Action from the DM", async () => {
+  setRole("DM");
+  await sendAction("Incipit!");
+  setRole("Player");
+  await sendAction("Here's an Action from the player");
+
+  const messages = await screen.findAllByTestId("message");
+  expect(messages.length).toBe(2);
+  expect(mockedFirestore[0].type).toBe("action");
+  expect(mockedFirestore[1].type).toBe("action");
+});
 
 function setMessages(messages) {
   mockedFirestore = messages;

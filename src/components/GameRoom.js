@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useCollectionData } from "react-firebase-hooks/firestore";
-import { isDM } from "../utils";
+import { getLastAction, isDM, isFromTheDM } from "../utils";
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
@@ -13,7 +13,8 @@ export default function GameRoom(props) {
   const sendMessage = async (messageType) => {
     setFormValue("");
     const { uid, photoURL } = props.user;
-    if (!isDM(props.user) && messages.length === 0 && messageType === "action") {
+    const lastAction = getLastAction(messages);
+    if (!isDM(props.user) && !isFromTheDM(lastAction) && messageType === "action") {
       return;
     }
     if (messageType === "action") {
