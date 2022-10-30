@@ -1,5 +1,5 @@
 import './App.css'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import 'firebase/compat/auth';
@@ -9,6 +9,8 @@ import SignOut from './components/SignOut';
 import GameRoom from './components/GameRoom';
 import { isDM } from './utils';
 import { slide as Menu } from 'react-burger-menu'
+import CharacterSheet from './components/CharacterSheet';
+import Inventory from './components/Inventory';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC6J82sRFdawN4miLvzcKKtAfSvG11k1t8",
@@ -28,13 +30,35 @@ function App() {
 
   const [user] = useAuthState(auth);
 
+  const signIn = 
+    <SignIn auth={auth} />
+
+  const gameRoom = 
+    <GameRoom 
+      firebase={firebase} 
+      firestore={firestore} 
+      user={user} 
+    />;
+
+  const characterSheet = 
+    <CharacterSheet/>;
+
+  const inventory = 
+    <Inventory/>;
+
+  const [page, setPage] = useState();
+
+  useEffect(() => {
+    setPage(user ? gameRoom : signIn)
+  }, [user]);
+
   return (
     <div className="App">
       <header className="App-header">
         <Menu>
-          <div>Game room</div>
-          <div>Character sheet</div>
-          <div>Inventory</div>
+          <div onClick={() => {setPage(gameRoom)}}>Game room</div>
+          <div onClick={() => {setPage(characterSheet)}}>Character sheet</div>
+          <div onClick={() => {setPage(inventory)}}>Inventory</div>
         </Menu>
         <div className='logo'>
           <img alt='whatsaxe' src="./whatsaxe.png" /><div>WhatsAxe</div>
@@ -43,18 +67,7 @@ function App() {
         {user && <SignOut auth={auth} />}
       </header>
       <section>
-        {
-          user ? 
-            <GameRoom 
-              firebase={firebase} 
-              firestore={firestore} 
-              user={user} 
-            /> 
-          : 
-            <div>
-              <SignIn auth={auth} />
-            </div>
-        }
+        {page}
       </section>
     </div>
   );

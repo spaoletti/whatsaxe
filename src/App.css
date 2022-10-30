@@ -6,6 +6,7 @@ body {
 }
 
 .App {
+  text-align: center;
   max-width: 728px;
   margin: 0 auto;
 }
@@ -239,6 +240,7 @@ Note: Beware of modifying this element as it can break the animations - you shou
   display: inline-block;
   margin-bottom: 30px;
   font-size: x-large;
+  cursor: pointer;
 }
 
 /* Styling of overlay */

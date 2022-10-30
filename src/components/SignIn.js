@@ -7,6 +7,6 @@ export default function SignIn(props) {
   }
 
   return (
-    <button onClick={signInWithGoogle}>Sign in with Google</button>
+    <div><button onClick={signInWithGoogle}>Sign in with Google</button></div>
   )
 }
