@@ -59,7 +59,7 @@ export default function GameRoom(props) {
           Chat
         </button>
         <button 
-          disabled={formValue.length === 0 || !isDM(props.user) && (!messages || messages.length === 0 || !isFromTheDM(lastAction))} 
+          disabled={formValue.length === 0 || (!isDM(props.user) && (!messages || messages.length === 0 || !isFromTheDM(lastAction)))} 
           onClick={() => sendMessage("action")} 
           data-testid="send-action" 
           type="button"

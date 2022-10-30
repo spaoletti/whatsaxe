@@ -3,12 +3,12 @@ import React from 'react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import 'firebase/compat/auth';
-
 import { useAuthState } from 'react-firebase-hooks/auth';
 import SignIn from './components/SignIn';
 import SignOut from './components/SignOut';
 import GameRoom from './components/GameRoom';
 import { isDM } from './utils';
+import { slide as Menu } from 'react-burger-menu'
 
 const firebaseConfig = {
   apiKey: "AIzaSyC6J82sRFdawN4miLvzcKKtAfSvG11k1t8",
@@ -31,6 +31,11 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
+        <Menu>
+          <a href='/'>Game room</a>
+          <a href='/'>Character sheet</a>
+          <a href='/'>Inventory</a>
+        </Menu>
         <div className='logo'>
           <img alt='whatsaxe' src="./whatsaxe.png" /><div>WhatsAxe</div>
         </div>

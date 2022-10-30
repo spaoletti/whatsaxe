@@ -7,6 +7,9 @@ export function isFromTheDM(message) {
 }
 
 export function getLastAction(messages) {
+  if (!messages) {
+    return null;
+  }
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i];
     if (message.type === "action") {
