@@ -7,13 +7,17 @@ export default function GameRoom(props) {
   const bottom = useRef();
   const messagesRef = props.firestore.collection("messages");
   const query = messagesRef.orderBy("createdAt").limit(100);
-  const [messages] = useCollectionData(query);
+  const [messages] = useCollectionData(query);  
   const [formValue, setFormValue] = useState("");
+  const lastAction = getLastAction(messages);
 
   const sendMessage = async (messageType) => {
+    const msgText = formValue.trim();
+    if (msgText === "") {
+      return;
+    }
     setFormValue("");
     const { uid, photoURL } = props.user;
-    const lastAction = getLastAction(messages);
     if (!isDM(props.user) && !isFromTheDM(lastAction) && messageType === "action") {
       return;
     }
@@ -22,7 +26,7 @@ export default function GameRoom(props) {
       query.get().then((result) => result.forEach((doc) => doc.ref.delete()));
     }
     messagesRef.add({
-      text: formValue,
+      text: msgText,
       createdAt: props.firebase.firestore.FieldValue.serverTimestamp(),
       uid,
       photoURL,
@@ -47,6 +51,7 @@ export default function GameRoom(props) {
           onChange={(e) => setFormValue(e.target.value)} 
         />
         <button 
+          disabled={formValue.length === 0}
           onClick={() => sendMessage("chat")} 
           data-testid="send" 
           type="button"
@@ -54,7 +59,7 @@ export default function GameRoom(props) {
           Chat
         </button>
         <button 
-          disabled={!isDM(props.user) && (!messages || messages.length === 0)} 
+          disabled={formValue.length === 0 || !isDM(props.user) && (!messages || messages.length === 0 || !isFromTheDM(lastAction))} 
           onClick={() => sendMessage("action")} 
           data-testid="send-action" 
           type="button"

@@ -58,6 +58,23 @@ beforeEach(() => {
 test.each([
   ["DM"], 
   ["Player"]
+])("The %p can't send empty messages", async (role) => {
+  setRole(role);
+  await sendChat(" ");
+  await sendAction(" ");
+
+  let noMessages = false;
+  try {
+    await screen.findAllByTestId("message");
+  } catch (e) {
+    noMessages = true;
+  }  
+  expect(noMessages).toBeTruthy();
+});
+
+test.each([
+  ["DM"], 
+  ["Player"]
 ])('if there are no messages the %p should be able to write a Chat', async (role) => {
   setRole(role);
   await sendChat("A message!");
@@ -130,6 +147,21 @@ test("A player should be able to declare an Action after an Action from the DM",
   expect(messages.length).toBe(2);
   expect(mockedFirestore[0].type).toBe("action");
   expect(mockedFirestore[1].type).toBe("action");
+});
+
+test("A player should NOT be able to declare an Action after another player's Action", async () => {
+  setRole("DM");
+  await sendAction("Incipit");
+  setRole("Player");
+  await sendAction("Action!");
+  setRole("Player");
+  await sendAction("Another action!");
+
+  const messages = await screen.findAllByTestId("message");
+  expect(messages.length).toBe(2);
+  expect(mockedFirestore[0].type).toBe("action");
+  expect(mockedFirestore[1].type).toBe("action");
+  expect(mockedFirestore[1].text).toBe("Action!");
 });
 
 function setMessages(messages) {
