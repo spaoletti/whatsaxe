@@ -50,6 +50,7 @@ function App() {
 
   useEffect(() => {
     setPage(user ? gameRoom : signIn)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return (
