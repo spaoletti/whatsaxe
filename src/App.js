@@ -26,18 +26,35 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const firestore = firebase.firestore();
 
-function storeUser(user) {
-  const document = {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName
-  }
-  firestore.collection("users").doc(user.uid).set(document);
-}
-
 function App() {
 
+  function storeUser(user) {
+    const document = {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName
+    }
+    firestore.collection("users").doc(user.uid).set(document);
+  }  
+
+  function handleMenuClick(page) {
+    setPage(page);
+    setIsMenuOpen(false);
+  }
+
   const [user] = useAuthState(auth);
+  const [page, setPage] = useState();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      storeUser(user);
+      setPage(gameRoom);
+    } else {
+      setPage(signIn);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const signIn = 
     <SignIn auth={auth} />
@@ -58,26 +75,16 @@ function App() {
   const inventory = 
     <Inventory/>;
 
-  const [page, setPage] = useState();
-
-  useEffect(() => {
-    if (user) {
-      storeUser(user);
-      setPage(gameRoom);
-    } else {
-      setPage(signIn);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
   return (
     <div className="App">
       <header className="App-header">
-        {user && <Menu>
-          <div onClick={() => {setPage(gameRoom)}}>Game room</div>
-          <div onClick={() => {setPage(characterSheet)}}>Character sheet</div>
-          <div onClick={() => {setPage(inventory)}}>Inventory</div>
-        </Menu>}
+        {user && 
+          <Menu isOpen={isMenuOpen} onStateChange={s => setIsMenuOpen(s.isOpen)}>
+            <div onClick={() => {handleMenuClick(gameRoom)}}>Game room</div>
+            <div onClick={() => {handleMenuClick(characterSheet)}}>Character sheet</div>
+            <div onClick={() => {handleMenuClick(inventory)}}>Inventory</div>
+          </Menu>
+        }
         <div className='logo'>
           <img alt='whatsaxe' src="./whatsaxe.png" /><div>WhatsAxe</div>
         </div>
