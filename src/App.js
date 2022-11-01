@@ -50,7 +50,10 @@ function App() {
     />;
 
   const characterSheet = 
-    <CharacterSheet/>;
+    <CharacterSheet
+      firestore={firestore}
+      user={user} 
+    />;
 
   const inventory = 
     <Inventory/>;
@@ -70,11 +73,11 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <Menu>
+        {user && <Menu>
           <div onClick={() => {setPage(gameRoom)}}>Game room</div>
           <div onClick={() => {setPage(characterSheet)}}>Character sheet</div>
           <div onClick={() => {setPage(inventory)}}>Inventory</div>
-        </Menu>
+        </Menu>}
         <div className='logo'>
           <img alt='whatsaxe' src="./whatsaxe.png" /><div>WhatsAxe</div>
         </div>
