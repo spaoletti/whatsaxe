@@ -26,6 +26,15 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const firestore = firebase.firestore();
 
+function storeUser(user) {
+  const document = {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName
+  }
+  firestore.collection("users").doc(user.uid).set(document);
+}
+
 function App() {
 
   const [user] = useAuthState(auth);
@@ -49,7 +58,12 @@ function App() {
   const [page, setPage] = useState();
 
   useEffect(() => {
-    setPage(user ? gameRoom : signIn)
+    if (user) {
+      storeUser(user);
+      setPage(gameRoom);
+    } else {
+      setPage(signIn);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
