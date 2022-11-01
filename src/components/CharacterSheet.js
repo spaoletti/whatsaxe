@@ -9,15 +9,30 @@ export default function CharacterSheet(props) {
     <div>You haven't created a character yet!</div>;
 
   const character = (stats) => 
-    <div>
-      <div>Name {stats.name}</div>
-      <div>Strength {stats.strength}</div>
-      <div>Constitution {stats.constitution}</div>
-      <div>Dexterity {stats.dexterity}</div>
-      <div>Intelligence {stats.intelligence}</div>
-      <div>Wisdom {stats.wisdom}</div>
-      <div>Charisma {stats.charisma}</div>
-      <div>Hit points {stats.hit_points}</div>
+    <div className="charSheet">
+      <div>
+        <div>Name</div><div>{stats.name}</div>
+      </div>
+      <div>
+        <div>Strength</div><div>{stats.strength}</div></div>
+      <div>
+        <div>Constitution</div><div>{stats.constitution}</div>
+      </div>
+      <div>
+        <div>Dexterity</div><div>{stats.dexterity}</div>
+      </div>
+      <div>
+        <div>Intelligence</div><div>{stats.intelligence}</div>
+      </div>
+      <div>
+        <div>Wisdom</div><div>{stats.wisdom}</div>
+      </div>
+      <div>
+        <div>Charisma</div><div>{stats.charisma}</div>
+      </div>
+      <div>
+        <div>Hit points</div><div>{stats.hit_points}</div>
+      </div>
     </div>
 
 

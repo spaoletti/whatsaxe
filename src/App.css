@@ -175,7 +175,7 @@ img {
 }
 
 
-/*////// react-burger-menu /////*/
+/* ---------------------------------- burger menu ---------------------------------- */
 
 /* Position and sizing of burger button */
 .bm-burger-button {
@@ -208,7 +208,9 @@ img {
 
 /*
 Sidebar wrapper styles
-Note: Beware of modifying this element as it can break the animations - you should not need to touch it in most cases
+Note: Beware of modifying this element as it can 
+break the animations - you should not need to 
+touch it in most cases
 */
 .bm-menu-wrap {
   position: fixed;
@@ -249,3 +251,38 @@ Note: Beware of modifying this element as it can break the animations - you shou
   margin-left: -10px;
   background: rgba(0, 0, 0, 0.3);
 }
+
+/* ---------------------------------- /burger menu ---------------------------------- */
+
+/* ---------------------------------- character sheet ---------------------------------- */
+
+.charSheet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.charSheet>div {
+  display: flex;
+  flex-direction: row;
+  background-color: white;
+  justify-content: center;
+  font-size: x-large;
+  border-radius: 10px;
+  margin-bottom: 5px;
+}
+
+.charSheet>div>div {
+  width: 150px;
+  padding: 10px;
+}
+
+.charSheet>div>div:first-child {
+  background-color: black;
+  color: white;
+}
+.charSheet>div>div:nth-child(2) {
+  color: gray;
+  font-weight: bolder;
+}
+/* ---------------------------------- /character sheet ---------------------------------- */
