@@ -43,7 +43,7 @@ function App() {
   }
 
   const [user] = useAuthState(auth);
-  const [page, setPage] = useState();
+  const [page, setPage] = useState(<div>Loading</div>);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {

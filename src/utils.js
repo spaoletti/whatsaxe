@@ -17,3 +17,12 @@ export function getLastAction(messages) {
     }
   }
 }
+
+export function parseCommand(commandString) {
+  const tokens = commandString.split(" ");
+  const name = tokens[0].slice(1);
+  return {
+    error: true,
+    name: name,
+  };
+}

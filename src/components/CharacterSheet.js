@@ -35,10 +35,10 @@ export default function CharacterSheet(props) {
       </div>
     </div>
 
-
   const [sheet, setSheet] = useState(loading);
-  const charactersRef = props.firestore.collection("characters");
-  charactersRef
+
+  props.firestore
+    .collection("characters")
     .where("uid", "==", props.user.uid)
     .get().then((r) => 
       setSheet(r.empty ? noCharacter : character(r.docs[0].data()))

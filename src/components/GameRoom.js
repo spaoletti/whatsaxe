@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useCollectionData } from "react-firebase-hooks/firestore";
-import { getLastAction, isDM, isFromTheDM } from "../utils";
+import { getLastAction, isDM, isFromTheDM, parseCommand } from "../utils";
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
@@ -18,13 +18,34 @@ export default function GameRoom(props) {
     }
     setFormValue("");
     const { uid, photoURL } = props.user;
-    if (!isDM(props.user) && !isFromTheDM(lastAction) && messageType === "action") {
-      return;
-    }
     if (messageType === "action") {
+      if (!isDM(props.user) && !isFromTheDM(lastAction)) {
+        return;
+      }
+
+      if (isDM(props.user) && msgText.charAt(0) === "/") {
+        const command = parseCommand(msgText);
+        if (command.error === true) {
+          messagesRef.add({
+            text: `!!! Unknown command: ${command.name} !!!`,
+            createdAt: props.firebase.firestore.FieldValue.serverTimestamp(),
+            uid,
+            photoURL: "https://cdn-icons-png.flaticon.com/512/5219/5219070.png",
+            type: "chat",
+            private: true
+          }).then(() => {
+            bottom.current.scrollIntoView();
+          });
+          return;    
+        } else {
+          // sendCommand
+        }
+      }
+
       const query = messagesRef.where('type','==',"chat");
       query.get().then((result) => result.forEach((doc) => doc.ref.delete()));
-    }
+    } 
+
     messagesRef.add({
       text: msgText,
       createdAt: props.firebase.firestore.FieldValue.serverTimestamp(),
