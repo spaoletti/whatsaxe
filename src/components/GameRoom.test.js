@@ -166,25 +166,38 @@ test("A player should NOT be able to declare an Action after another player's Ac
 
 test("A DM should be able to send an unknown command and receive an error message", async () => {
   setRole("DM");
-  await sendAction("/someCommand");
+  await sendAction("/someWrongCommand");
 
   const messages = await screen.findAllByTestId("message");
 
   expect(messages.length).toBe(1);
   expect(mockedFirestore[0].type).toBe("chat");
   expect(mockedFirestore[0].private).toBe(true);
-  expect(mockedFirestore[0].text).toBe("!!! Unknown command: someCommand !!!");
+  expect(mockedFirestore[0].text).toBe("!!! Unknown command: someWrongCommand !!!");
 });
 
 test("A wrong command from the DM should not delete chats", async () => {
   setRole("DM");
   await sendChat("A chat");
   await sendChat("Another chat");
-  await sendAction("/someCommand");
+  await sendAction("/someWrongCommand");
 
   const messages = await screen.findAllByTestId("message");
 
   expect(messages.length).toBe(3);
+});
+
+test("A player should NOT be able to send commands", async () => {
+  setRole("DM");
+  await sendAction("Incipit!");
+  setRole("Player");
+  await sendAction("/someCommand");
+
+  const messages = await screen.findAllByTestId("message");
+
+  expect(messages.length).toBe(2);
+  expect(mockedFirestore[1].type).toBe("action");
+  expect(mockedFirestore[1].text).toBe("/someCommand");
 });
 
 function setMessages(messages) {
