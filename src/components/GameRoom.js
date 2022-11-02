@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useCollectionData } from "react-firebase-hooks/firestore";
-import { buildMessage, getLastAction, isDM, isFromTheDM, isPlayer } from "../utils";
+import { buildMessage, getLastAction, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
@@ -10,6 +10,7 @@ export default function GameRoom(props) {
   const [messages] = useCollectionData(query);  
   const [inputText, setInputText] = useState("");
   const lastAction = getLastAction(messages);
+  const inputIsEmpty = inputText.trim().length === 0;
 
   const deleteChats = (messagesRef) => {
     const query = messagesRef.where('type','==',"chat");
@@ -17,16 +18,9 @@ export default function GameRoom(props) {
   }
 
   const sendMessage = async (type) => {
-    const text = inputText.trim();
-    if (text === "") {
-      return;
-    }
-    if (type === "action" && isPlayer(props.user) && !isFromTheDM(lastAction)) {
-      return;
-    }
     setInputText("");
     const message = buildMessage(
-      text, 
+      inputText.trim(), 
       type, 
       props.user 
     );
@@ -57,7 +51,7 @@ export default function GameRoom(props) {
           onChange={(e) => setInputText(e.target.value)} 
         />
         <button 
-          disabled={inputText.length === 0 || inputText.charAt(0) === "/"}
+          disabled={inputIsEmpty || inputText.charAt(0) === "/"}
           onClick={() => sendMessage("chat")} 
           data-testid="send" 
           type="button"
@@ -65,7 +59,7 @@ export default function GameRoom(props) {
           Chat
         </button>
         <button 
-          disabled={inputText.length === 0 || (!isDM(props.user) && (!messages || messages.length === 0 || !isFromTheDM(lastAction)))} 
+          disabled={inputIsEmpty || (isPlayer(props.user) && !isFromTheDM(lastAction))} 
           onClick={() => sendMessage("action")} 
           data-testid="send-action" 
           type="button"
