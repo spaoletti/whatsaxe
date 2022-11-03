@@ -25,7 +25,8 @@ export default function GameRoom(props) {
     const message = buildMessage(
       inputText.trim(), 
       type, 
-      props.user 
+      props.user,
+      props.characters
     );
     if (message.type === "action") {
       deleteChats(messagesRef);

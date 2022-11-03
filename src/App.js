@@ -47,8 +47,6 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [charactersList, setCharactersList] = useState();
 
-  // useEffect(() => console.warn("App rerendering"));
-
   useEffect(() => {
     if (user) {
       storeUser(user);
@@ -72,7 +70,8 @@ function App() {
     <GameRoom 
       firebase={firebase} 
       firestore={firestore} 
-      user={user} 
+      user={user}
+      characters={charactersList} 
     />;
 
   const characterSheet = 
@@ -83,7 +82,6 @@ function App() {
 
   const characters =
     <PlayersList
-      firestore={firestore}
       list={charactersList}
     />
 

@@ -22,19 +22,22 @@ export function getLastAction(messages) {
   }
 }
 
+const validCommands = [
+  "skillcheck"
+];
+
 export function parseCommand(commandString) {
   const tokens = commandString.split(" ");
-  const name = tokens[0].slice(1);
   return {
-    error: true,
-    name: name,
-  };
+    name: tokens[0].slice(1),
+    args: tokens.slice(1)
+  }
 }
 
-export function buildMessage(text, type, user) {
+export function buildMessage(text, type, user, characters) {
   if (isCommand(text, type, user)) {
     const command = parseCommand(text);
-    if (command.error) {
+    if (!validCommands.includes(command.name)) {
       return {
         text: `!!! Unknown command: ${command.name} !!!`,
         photoURL: "https://cdn-icons-png.flaticon.com/512/5219/5219070.png",
@@ -42,6 +45,7 @@ export function buildMessage(text, type, user) {
         private: true
       }
     } 
+    return buildSkillCheckMessage(command, characters);
   }   
   return {
     text: text,
@@ -52,4 +56,18 @@ export function buildMessage(text, type, user) {
 
 function isCommand(text, type, user) {
   return type === "action" && isDM(user) && text.charAt(0) === "/";
+}
+
+function buildSkillCheckMessage(command, characters) {
+  for (const character of characters) {
+    if (character.name.toLowerCase() === command.args[0].toLowerCase()) {
+      return null; // TODO
+    }
+  }
+  return {
+    text: `!!! Unknown player: ${command.args[0]} !!!`,
+    photoURL: "https://cdn-icons-png.flaticon.com/512/5219/5219070.png",
+    type: "chat",
+    private: true
+  }
 }

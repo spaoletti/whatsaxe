@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-
 export default function PlayersList(props) {
 
   function render(list) {
@@ -23,8 +21,6 @@ export default function PlayersList(props) {
       {list.map((c, idx) => 
         <div key={idx}>{c.name}</div>)}
     </div>
-
-  // useEffect(() => console.warn("PlayerList rerendering"));
 
   return render(props.list);
 }

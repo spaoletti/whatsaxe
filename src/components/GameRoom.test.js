@@ -52,7 +52,17 @@ const user = {
 
 beforeEach(() => {
   setMessages([]);
-  render(<GameRoom firebase={firebase} firestore={firestore} user={user}/>)
+  render(
+    <GameRoom 
+      firebase={firebase} 
+      firestore={firestore} 
+      user={user}
+      characters={[
+        { name: "player1" }, 
+        { name: "player2" }
+      ]}
+    />
+  )
 });
 
 test.each([
@@ -198,6 +208,18 @@ test("A player should NOT be able to send commands", async () => {
   expect(messages.length).toBe(2);
   expect(mockedFirestore[1].type).toBe("action");
   expect(mockedFirestore[1].text).toBe("/someCommand");
+});
+
+test("When a DM asks a non existing player to make a skill check, he should receive an error message", async () => {
+  setRole("DM");
+  await sendAction("/skillcheck nonexisting str 20");
+
+  const messages = await screen.findAllByTestId("message");
+
+  expect(messages.length).toBe(1);
+  expect(mockedFirestore[0].type).toBe("chat");
+  expect(mockedFirestore[0].private).toBe(true);
+  expect(mockedFirestore[0].text).toBe("!!! Unknown player: nonexisting !!!");
 });
 
 function setMessages(messages) {
