@@ -20,6 +20,7 @@ export default function GameRoom(props) {
       );  
   }
 
+  
   const sendMessage = async (type) => {
     setInputText("");
     const message = buildMessage(

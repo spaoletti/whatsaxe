@@ -58,7 +58,7 @@ function isCommand(text, type, user) {
 }
 
 function buildSkillCheckMessage(command, characters) {
-  if (command.args.length != 3) {
+  if (command.args.length !== 3) {
     return errorMessage(`Wrong number of arguments. Correct syntax: /skillcheck <player_name> <stat> <DC>`);
   }
   if (!characterIsInTheParty(command.args[0], characters)) {

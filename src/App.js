@@ -47,24 +47,14 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [charactersList, setCharactersList] = useState();
 
-  useEffect(() => {
-    if (user) {
-      storeUser(user);
-      setPage(gameRoom);
-    } else {
-      setPage(signIn);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
   !charactersList && firestore
     .collection("characters")
-    .get().then(r => {
+    .get().then(r => 
       setCharactersList(r.empty ? [] : r.docs.map(d => d.data()))
-    });
+    );
 
   const signIn = 
-    <SignIn auth={auth} />
+    <SignIn auth={auth} />;
 
   const gameRoom = 
     <GameRoom 
@@ -84,6 +74,21 @@ function App() {
     <PlayersList
       list={charactersList}
     />
+
+  useEffect(() => {
+    if (user) {
+      storeUser(user);
+      setPage(gameRoom);
+    } else {
+      setPage(signIn);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  useEffect(() => {
+    setPage(gameRoom);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [charactersList])
 
   return (
     <div className="App">

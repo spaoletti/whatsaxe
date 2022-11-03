@@ -58,8 +58,8 @@ beforeEach(() => {
       firestore={firestore} 
       user={user}
       characters={[
-        { name: "player1" }, 
-        { name: "player2" }
+        { name: "Player1", uid: "abc" }, 
+        { name: "Player2", uid: "def" }
       ]}
     />
   )
@@ -256,6 +256,18 @@ test("A skill check command should have 3 arguments, or it throws an error messa
   expect(mockedFirestore[0].type).toBe("chat");
   expect(mockedFirestore[0].private).toBe(true);
   expect(mockedFirestore[0].text).toBe("!!! Wrong number of arguments. Correct syntax: /skillcheck <player_name> <stat> <DC> !!!");
+});
+
+test("A DM should be able to ask for a skill check", async () => {
+  setRole("DM");
+  await sendAction("/skillcheck player1 str 20");
+
+  const messages = await screen.findAllByTestId("message");
+
+  expect(messages.length).toBe(1);
+  expect(mockedFirestore[0].type).toBe("chat");
+  expect(mockedFirestore[0].text).toBe("Player1, make a Strength skill check! (DC 20)");
+  expect(mockedFirestore[0].target).toBe("abc");
 });
 
 function setMessages(messages) {
