@@ -32,7 +32,7 @@ export function parseCommand(commandString) {
 }
 
 export function buildMessage(text, type, user) {
-  if (type === "action" && isDM(user) && text.charAt(0) === "/") {
+  if (isCommand(text, type, user)) {
     const command = parseCommand(text);
     if (command.error) {
       return {
@@ -48,4 +48,8 @@ export function buildMessage(text, type, user) {
     photoURL: user.photoURL,
     type: type
   };  
+}
+
+function isCommand(text, type, user) {
+  return type === "action" && isDM(user) && text.charAt(0) === "/";
 }

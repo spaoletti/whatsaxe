@@ -7,10 +7,10 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import SignIn from './components/SignIn';
 import SignOut from './components/SignOut';
 import GameRoom from './components/GameRoom';
-import { isDM } from './utils';
+import { isDM, isPlayer } from './utils';
 import { slide as Menu } from 'react-burger-menu'
 import CharacterSheet from './components/CharacterSheet';
-import Inventory from './components/Inventory';
+import PlayersList from './components/PlayersList';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC6J82sRFdawN4miLvzcKKtAfSvG11k1t8",
@@ -72,8 +72,8 @@ function App() {
       user={user} 
     />;
 
-  const inventory = 
-    <Inventory/>;
+  const characters =
+    <PlayersList />
 
   return (
     <div className="App">
@@ -81,8 +81,8 @@ function App() {
         {user && 
           <Menu isOpen={isMenuOpen} onStateChange={s => setIsMenuOpen(s.isOpen)}>
             <div onClick={() => {handleMenuClick(gameRoom)}}>Game room</div>
-            <div onClick={() => {handleMenuClick(characterSheet)}}>Character sheet</div>
-            <div onClick={() => {handleMenuClick(inventory)}}>Inventory</div>
+            {isPlayer(user) && <div onClick={() => {handleMenuClick(characterSheet)}}>Character sheet</div>}
+            {isDM(user) && <div onClick={() => {handleMenuClick(characters)}}>Characters</div>}
           </Menu>
         }
         <div className='logo'>
