@@ -234,6 +234,30 @@ test("When a DM asks a player to make a skill check on a wrong stat, he should r
   expect(mockedFirestore[0].text).toBe("!!! Unknown stat: xxx !!!");
 });
 
+test("When a DM asks a player to make a skill check on a DC that's not a number, he should receive an error message", async () => {
+  setRole("DM");
+  await sendAction("/skillcheck player1 str xx");
+
+  const messages = await screen.findAllByTestId("message");
+
+  expect(messages.length).toBe(1);
+  expect(mockedFirestore[0].type).toBe("chat");
+  expect(mockedFirestore[0].private).toBe(true);
+  expect(mockedFirestore[0].text).toBe("!!! DC must be a number. Provided: xx !!!");
+});
+
+test("A skill check command should have 3 arguments, or it throws an error message", async () => {
+  setRole("DM");
+  await sendAction("/skillcheck");
+
+  const messages = await screen.findAllByTestId("message");
+
+  expect(messages.length).toBe(1);
+  expect(mockedFirestore[0].type).toBe("chat");
+  expect(mockedFirestore[0].private).toBe(true);
+  expect(mockedFirestore[0].text).toBe("!!! Wrong number of arguments. Correct syntax: /skillcheck <player_name> <stat> <DC> !!!");
+});
+
 function setMessages(messages) {
   mockedFirestore = messages;
   useCollectionData.mockImplementation(() => [mockedFirestore]);

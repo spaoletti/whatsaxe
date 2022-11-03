@@ -40,7 +40,7 @@ export function buildMessage(text, type, user, characters) {
   if (isCommand(text, type, user)) {
     const command = parseCommand(text);
     if (!validCommands.includes(command.name)) {
-      return errorMessage(`!!! Unknown command: ${command.name} !!!`);
+      return errorMessage(`Unknown command: ${command.name}`);
     } 
     return buildSkillCheckMessage(command, characters);
   }   
@@ -58,11 +58,17 @@ function isCommand(text, type, user) {
 }
 
 function buildSkillCheckMessage(command, characters) {
+  if (command.args.length != 3) {
+    return errorMessage(`Wrong number of arguments. Correct syntax: /skillcheck <player_name> <stat> <DC>`);
+  }
   if (!characterIsInTheParty(command.args[0], characters)) {
-    return errorMessage(`!!! Unknown player: ${command.args[0]} !!!`);
+    return errorMessage(`Unknown player: ${command.args[0]}`);
   }
   if (!stats.includes(command.args[1].toLowerCase())) {
-    return errorMessage(`!!! Unknown stat: ${command.args[1]} !!!`);
+    return errorMessage(`Unknown stat: ${command.args[1]}`);
+  }
+  if (isNaN(command.args[2])) {
+    return errorMessage(`DC must be a number. Provided: ${command.args[2]}`);
   }
   return null; // TODO
 }
@@ -78,7 +84,7 @@ function characterIsInTheParty(name, characters) {
 
 function errorMessage(message) {
   return {
-    text: message,
+    text: `!!! ${message} !!!`,
     photoURL: "https://cdn-icons-png.flaticon.com/512/5219/5219070.png",
     type: "chat",
     private: true
