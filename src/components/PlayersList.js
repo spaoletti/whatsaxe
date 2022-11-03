@@ -1,6 +1,16 @@
-import { useState } from "react";
+import { useEffect } from "react";
 
 export default function PlayersList(props) {
+
+  function render(list) {
+    if (!list) {
+      return loading;
+    } else if (list.length === 0) {
+      return noPlayersList;
+    } else {
+      return playersList(list);
+    }
+  }
 
   const loading = 
     <div>Loading</div>;
@@ -8,19 +18,13 @@ export default function PlayersList(props) {
   const noPlayersList =
     <div>There are no players!</div>;
 
-  const playersList = (list) => 
+  const playersList = (list) =>
     <div>
-      { list.map(c => <div>{c.name}</div>) }
+      {list.map((c, idx) => 
+        <div key={idx}>{c.name}</div>)}
     </div>
 
-  const [list, setList] = useState(loading);
+  // useEffect(() => console.warn("PlayerList rerendering"));
 
-  list === loading && props.firestore
-    .collection("characters")
-    .get().then(r => {
-      console.log(r);
-      setList(r.empty ? noPlayersList : playersList(r.docs.map(d => d.data())))
-    });
-
-  return list
+  return render(props.list);
 }

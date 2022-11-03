@@ -45,6 +45,9 @@ function App() {
   const [user] = useAuthState(auth);
   const [page, setPage] = useState(<div>Loading</div>);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [charactersList, setCharactersList] = useState();
+
+  // useEffect(() => console.warn("App rerendering"));
 
   useEffect(() => {
     if (user) {
@@ -55,6 +58,12 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  !charactersList && firestore
+    .collection("characters")
+    .get().then(r => {
+      setCharactersList(r.empty ? [] : r.docs.map(d => d.data()))
+    });
 
   const signIn = 
     <SignIn auth={auth} />
@@ -75,6 +84,7 @@ function App() {
   const characters =
     <PlayersList
       firestore={firestore}
+      list={charactersList}
     />
 
   return (

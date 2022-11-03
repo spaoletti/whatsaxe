@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function CharacterSheet(props) {
 
@@ -36,6 +36,8 @@ export default function CharacterSheet(props) {
     </div>
 
   const [sheet, setSheet] = useState(loading);
+
+  // useEffect(() => console.warn("CharSheet rerendering"));
 
   sheet === loading && props.firestore
     .collection("characters")
