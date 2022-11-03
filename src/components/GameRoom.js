@@ -13,8 +13,11 @@ export default function GameRoom(props) {
   const inputIsEmpty = inputText.trim().length === 0;
 
   const deleteChats = (messagesRef) => {
-    const query = messagesRef.where('type','==',"chat");
-    query.get().then((result) => result.forEach((doc) => doc.ref.delete()));  
+    messagesRef
+      .where('type','==',"chat")
+      .get().then((result) => 
+        result.forEach((doc) => doc.ref.delete())
+      );  
   }
 
   const sendMessage = async (type) => {

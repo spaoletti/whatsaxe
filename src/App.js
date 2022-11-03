@@ -73,7 +73,9 @@ function App() {
     />;
 
   const characters =
-    <PlayersList />
+    <PlayersList
+      firestore={firestore}
+    />
 
   return (
     <div className="App">
@@ -82,7 +84,7 @@ function App() {
           <Menu isOpen={isMenuOpen} onStateChange={s => setIsMenuOpen(s.isOpen)}>
             <div onClick={() => {handleMenuClick(gameRoom)}}>Game room</div>
             {isPlayer(user) && <div onClick={() => {handleMenuClick(characterSheet)}}>Character sheet</div>}
-            {isDM(user) && <div onClick={() => {handleMenuClick(characters)}}>Characters</div>}
+            <div onClick={() => {handleMenuClick(characters)}}>Party</div>
           </Menu>
         }
         <div className='logo'>

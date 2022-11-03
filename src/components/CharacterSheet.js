@@ -37,7 +37,7 @@ export default function CharacterSheet(props) {
 
   const [sheet, setSheet] = useState(loading);
 
-  props.firestore
+  sheet === loading && props.firestore
     .collection("characters")
     .where("uid", "==", props.user.uid)
     .get().then((r) => 
