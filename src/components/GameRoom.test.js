@@ -222,6 +222,18 @@ test("When a DM asks a non existing player to make a skill check, he should rece
   expect(mockedFirestore[0].text).toBe("!!! Unknown player: nonexisting !!!");
 });
 
+test("When a DM asks a player to make a skill check on a wrong stat, he should receive an error message", async () => {
+  setRole("DM");
+  await sendAction("/skillcheck player1 xxx 20");
+
+  const messages = await screen.findAllByTestId("message");
+
+  expect(messages.length).toBe(1);
+  expect(mockedFirestore[0].type).toBe("chat");
+  expect(mockedFirestore[0].private).toBe(true);
+  expect(mockedFirestore[0].text).toBe("!!! Unknown stat: xxx !!!");
+});
+
 function setMessages(messages) {
   mockedFirestore = messages;
   useCollectionData.mockImplementation(() => [mockedFirestore]);
