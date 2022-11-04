@@ -37,67 +37,67 @@ function App() {
     firestore.collection("users").doc(user.uid).set(document);
   }  
 
+  function loadCharacterList() {
+    firestore
+      .collection("characters")
+      .get().then(r => 
+        setCharactersList(r.empty ? [] : r.docs.map(d => d.data()))
+      );
+  }
+
   function handleMenuClick(page) {
     setPage(page);
     setIsMenuOpen(false);
   }
 
   const [user] = useAuthState(auth);
-  const [page, setPage] = useState(<div>Loading</div>);
+  const [page, setPage] = useState();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [charactersList, setCharactersList] = useState();
-
-  !charactersList && firestore
-    .collection("characters")
-    .get().then(r => 
-      setCharactersList(r.empty ? [] : r.docs.map(d => d.data()))
-    );
-
-  const signIn = 
-    <SignIn auth={auth} />;
-
-  const gameRoom = 
-    <GameRoom 
-      firebase={firebase} 
-      firestore={firestore} 
-      user={user}
-      characters={charactersList} 
-    />;
-
-  const characterSheet = 
-    <CharacterSheet
-      firestore={firestore}
-      user={user} 
-    />;
-
-  const characters =
-    <PlayersList
-      list={charactersList}
-    />
 
   useEffect(() => {
     if (user) {
       storeUser(user);
-      setPage(gameRoom);
+      loadCharacterList();
+      setPage("gameRoom");
     } else {
-      setPage(signIn);
+      setPage("signIn");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  useEffect(() => {
-    setPage(gameRoom);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [charactersList])
+  function render(page) {
+    switch (page) {
+      case "signIn":
+        return <SignIn auth={auth} />;
+      case "gameRoom":
+        return <GameRoom 
+          firebase={firebase} 
+          firestore={firestore} 
+          user={user}
+          characters={charactersList} 
+        />;
+      case "characterSheet":
+        return <CharacterSheet
+          firestore={firestore}
+          user={user} 
+        />;    
+      case "party":
+        return <PlayersList
+          list={charactersList}
+        />;  
+      default:
+        return <div>Loading</div>;
+    }
+  }
 
   return (
     <div className="App">
       <header className="App-header">
         {user && 
           <Menu isOpen={isMenuOpen} onStateChange={s => setIsMenuOpen(s.isOpen)}>
-            <div onClick={() => {handleMenuClick(gameRoom)}}>Game room</div>
-            {isPlayer(user) && <div onClick={() => {handleMenuClick(characterSheet)}}>Character sheet</div>}
-            <div onClick={() => {handleMenuClick(characters)}}>Party</div>
+            <div onClick={() => {handleMenuClick("gameRoom")}}>Game room</div>
+            {isPlayer(user) && <div onClick={() => {handleMenuClick("characterSheet")}}>Character sheet</div>}
+            <div onClick={() => {handleMenuClick("party")}}>Party</div>
           </Menu>
         }
         <div className='logo'>
@@ -107,7 +107,7 @@ function App() {
         {user && <SignOut auth={auth} />}
       </header>
       <section>
-        {page}
+        {render(page)}
       </section>
     </div>
   );
