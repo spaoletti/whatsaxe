@@ -266,7 +266,7 @@ test("A DM should be able to ask for a skill check", async () => {
 
   expect(messages.length).toBe(1);
   expect(mockedFirestore[0].type).toBe("chat");
-  expect(mockedFirestore[0].text).toBe("Player1, make a Strength skill check! (DC 20)");
+  expect(mockedFirestore[0].text).toBe("PLAYER1, make a STR skill check! (DC 20)");
   expect(mockedFirestore[0].target).toBe("abc");
 });
 

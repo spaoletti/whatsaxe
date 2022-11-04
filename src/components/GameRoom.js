@@ -19,7 +19,6 @@ export default function GameRoom(props) {
         result.forEach((doc) => doc.ref.delete())
       );  
   }
-
   
   const sendMessage = async (type) => {
     setInputText("");

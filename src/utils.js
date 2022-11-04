@@ -42,7 +42,7 @@ export function buildMessage(text, type, user, characters) {
     if (!validCommands.includes(command.name)) {
       return errorMessage(`Unknown command: ${command.name}`);
     } 
-    return buildSkillCheckMessage(command, characters);
+    return buildSkillCheckMessage(command, characters, user);
   }   
   return {
     text: text,
@@ -57,11 +57,12 @@ function isCommand(text, type, user) {
   return type === "action" && isDM(user) && text.charAt(0) === "/";
 }
 
-function buildSkillCheckMessage(command, characters) {
+function buildSkillCheckMessage(command, characters, user) {
   if (command.args.length !== 3) {
     return errorMessage(`Wrong number of arguments. Correct syntax: /skillcheck <player_name> <stat> <DC>`);
   }
-  if (!characterIsInTheParty(command.args[0], characters)) {
+  const character = characters.find(c => c.name.toLowerCase() === command.args[0].toLowerCase());
+  if (!character) {
     return errorMessage(`Unknown player: ${command.args[0]}`);
   }
   if (!stats.includes(command.args[1].toLowerCase())) {
@@ -70,16 +71,12 @@ function buildSkillCheckMessage(command, characters) {
   if (isNaN(command.args[2])) {
     return errorMessage(`DC must be a number. Provided: ${command.args[2]}`);
   }
-  return null; // TODO
-}
-
-function characterIsInTheParty(name, characters) {
-  for (const character of characters) {
-    if (character.name.toLowerCase() === name.toLowerCase()) {
-      return true;
-    }
+  return {
+    text: `${character.name.toUpperCase()}, make a ${command.args[1].toUpperCase()} skill check! (DC ${command.args[2]})`,
+    photoURL: user.photoURL,
+    type: "chat",
+    target: character.uid
   }
-  return false;
 }
 
 function errorMessage(message) {
