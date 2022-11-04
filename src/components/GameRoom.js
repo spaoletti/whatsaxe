@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { buildMessage, getLastAction, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
@@ -21,6 +21,9 @@ export default function GameRoom(props) {
   }
   
   const sendMessage = async (type) => {
+    if (inputIsEmpty) {
+      return;
+    }
     setInputText("");
     const message = buildMessage(
       inputText.trim(), 
@@ -35,10 +38,19 @@ export default function GameRoom(props) {
       ...message,
       uid: props.user.uid,
       createdAt: props.firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => { 
-      bottom.current.scrollIntoView(); 
-    });
+    })
   }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendMessage("chat");
+    }
+  }
+
+  useEffect(() => {
+    bottom.current.scrollIntoView();
+  });
 
   return (
     <>
@@ -48,7 +60,7 @@ export default function GameRoom(props) {
         ))}
         <div ref={bottom}></div>
       </main>
-      <form>
+      <form onKeyDown={handleKeyDown}>
         <input 
           data-testid="text" 
           value={inputText} 
