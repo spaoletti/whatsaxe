@@ -66,9 +66,10 @@ function App() {
   }, [user]);
 
   function render(page) {
+    if (!user) {
+      return <SignIn auth={auth} />;
+    }
     switch (page) {
-      case "signIn":
-        return <SignIn auth={auth} />;
       case "gameRoom":
         return <GameRoom 
           firebase={firebase} 
