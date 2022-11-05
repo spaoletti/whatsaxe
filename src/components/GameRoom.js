@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollectionData } from "react-firebase-hooks/firestore";
-import { buildMessage, getLastAction, isFromTheDM, isPlayer } from "../utils";
+import { buildMessage, getLastAction, getLastRollRequest, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
+import RollButton from "./RollButton";
 
 export default function GameRoom(props) {
   const bottom = useRef();
@@ -10,6 +11,7 @@ export default function GameRoom(props) {
   const [messages] = useCollectionData(query);  
   const [inputText, setInputText] = useState("");
   const lastAction = getLastAction(messages);
+  const rollRequest = getLastRollRequest(messages, props.user);
   const inputIsEmpty = inputText.trim().length === 0;
 
   const deleteChats = (messagesRef) => {
@@ -59,6 +61,7 @@ export default function GameRoom(props) {
           <ChatMessage key={idx} message={msg} user={props.user} />
         ))}
         <div ref={bottom}></div>
+        {rollRequest && <RollButton/>}
       </main>
       <form onKeyDown={handleKeyDown}>
         <input 
