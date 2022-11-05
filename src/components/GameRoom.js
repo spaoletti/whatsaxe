@@ -10,9 +10,9 @@ export default function GameRoom(props) {
   const query = messagesRef.orderBy("createdAt").limit(100);
   const [messages] = useCollectionData(query);  
   const [inputText, setInputText] = useState("");
+  const inputIsEmpty = inputText.trim().length === 0;
   const lastAction = getLastAction(messages);
   const rollRequest = getLastRollRequest(messages, props.user);
-  const inputIsEmpty = inputText.trim().length === 0;
 
   const deleteChats = (messagesRef) => {
     messagesRef
@@ -23,15 +23,13 @@ export default function GameRoom(props) {
   }
   
   const sendMessage = async (type) => {
-    if (inputIsEmpty) {
-      return;
-    }
     setInputText("");
     const message = buildMessage(
       inputText.trim(), 
       type, 
       props.user,
-      props.characters
+      props.characters,
+      messages
     );
     if (message.type === "action") {
       deleteChats(messagesRef);
@@ -43,9 +41,16 @@ export default function GameRoom(props) {
     })
   }
 
+  const isChatDisabled = () => inputIsEmpty || inputText.charAt(0) === "/";
+  
+  const isActionDisabled = () => inputIsEmpty || (isPlayer(props.user) && !isFromTheDM(lastAction));
+
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter') {      
       e.preventDefault();
+      if (isChatDisabled()) {
+        return;
+      }
       sendMessage("chat");
     }
   }
@@ -70,7 +75,7 @@ export default function GameRoom(props) {
           onChange={(e) => setInputText(e.target.value)} 
         />
         <button 
-          disabled={inputIsEmpty || inputText.charAt(0) === "/"}
+          disabled={isChatDisabled()}
           onClick={() => sendMessage("chat")} 
           data-testid="send" 
           type="button"
@@ -78,7 +83,7 @@ export default function GameRoom(props) {
           Chat
         </button>
         <button 
-          disabled={inputIsEmpty || (isPlayer(props.user) && !isFromTheDM(lastAction))} 
+          disabled={isActionDisabled()} 
           onClick={() => sendMessage("action")} 
           data-testid="send-action" 
           type="button"

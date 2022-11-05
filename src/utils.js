@@ -1,9 +1,9 @@
-export function isDM(userOrMessage) {
-  return userOrMessage.uid === "78OjG96RrtZi5J3vqUChlmIdL503";
+export function isDM(uidObject) {
+  return uidObject.uid === "78OjG96RrtZi5J3vqUChlmIdL503";
 }
 
-export function isPlayer(userOrMessage) {
-  return !isDM(userOrMessage);
+export function isPlayer(uidObject) {
+  return !isDM(uidObject);
 }
 
 export function isFromTheDM(message) {
@@ -45,13 +45,13 @@ export function parseCommand(commandString) {
   }
 }
 
-export function buildMessage(text, type, user, characters) {
+export function buildMessage(text, type, user, characters, messages) {
   if (isCommand(text, type, user)) {
     const command = parseCommand(text);
     if (!validCommands.includes(command.name)) {
       return errorMessage(`Unknown command: ${command.name}`);
     } 
-    return buildSkillCheckMessage(command, characters, user);
+    return buildSkillCheckMessage(command, characters, user, messages);
   }   
   return {
     text: text,
@@ -66,7 +66,7 @@ function isCommand(text, type, user) {
   return type === "action" && isDM(user) && text.charAt(0) === "/";
 }
 
-function buildSkillCheckMessage(command, characters, user) {
+function buildSkillCheckMessage(command, characters, user, messages) {
   if (command.args.length !== 3) {
     return errorMessage(`Wrong number of arguments. Correct syntax: /skillcheck <player_name> <stat> <DC>`);
   }
@@ -79,6 +79,10 @@ function buildSkillCheckMessage(command, characters, user) {
   }
   if (isNaN(command.args[2])) {
     return errorMessage(`DC must be a number. Provided: ${command.args[2]}`);
+  }
+  const lastRollRequest = getLastRollRequest(messages, character);
+  if (lastRollRequest && lastRollRequest.target === character.uid) {
+    return errorMessage(`${character.name} has already a skill check pending`);
   }
   return {
     text: `${character.name.toUpperCase()}, make a ${command.args[1].toUpperCase()} skill check! (DC ${command.args[2]})`,

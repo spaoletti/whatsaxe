@@ -64,7 +64,6 @@ beforeEach(() => {
 
 describe("Basic game loop", () => {
 
-  // TODO should be both by clicking and by hitting enter
   test.each([
     ["DM"], 
     ["player1"]
@@ -297,13 +296,31 @@ describe("Commands", () => {
       expect(rollButton).toBeFalsy();
     });
 
-    // test("If there is a skill check pending, the DM should NOT be able to ask another one to the same player", async () => {
+    test("If there is a skill check pending, the DM should NOT be able to ask another one to the same player", async () => {
+      setPlayer("DM");
+      await sendAction("/skillcheck player1 str 20");
+      await sendAction("/skillcheck player1 dex 20");
 
-    // });
+      const messages = await screen.findAllByTestId("message");    
 
-    // test("If there is a skill check pending, the DM should be able to ask another one to another player", async () => {
+      expect(messages.length).toBe(2);
+      expect(mockedFirestore[1].type).toBe("chat");
+      expect(mockedFirestore[1].private).toBe(true);
+      expect(mockedFirestore[1].text).toBe("!!! player1 has already a skill check pending !!!");
+    });
 
-    // });
+    test("If there is a skill check pending, the DM should be able to ask another one to another player", async () => {
+      setPlayer("DM");
+      await sendAction("/skillcheck player1 str 20");
+      await sendAction("/skillcheck player2 dex 20");
+
+      const messages = await screen.findAllByTestId("message");    
+
+      expect(messages.length).toBe(2);
+      expect(mockedFirestore[1].type).toBe("chat");
+      expect(mockedFirestore[1].text).toBe("PLAYER2, make a DEX skill check! (DC 20)");
+      expect(mockedFirestore[1].target).toBe("def");
+    });
 
   });  
 
