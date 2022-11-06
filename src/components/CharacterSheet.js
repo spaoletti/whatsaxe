@@ -14,24 +14,24 @@ export default function CharacterSheet(props) {
         <div>Name</div><div>{stats.name}</div>
       </div>
       <div>
-        <div>Strength</div><div>{stats.strength}</div></div>
+        <div>Strength</div><div>{stats.str}</div></div>
       <div>
-        <div>Constitution</div><div>{stats.constitution}</div>
+        <div>Constitution</div><div>{stats.con}</div>
       </div>
       <div>
-        <div>Dexterity</div><div>{stats.dexterity}</div>
+        <div>Dexterity</div><div>{stats.dex}</div>
       </div>
       <div>
-        <div>Intelligence</div><div>{stats.intelligence}</div>
+        <div>Intelligence</div><div>{stats.int}</div>
       </div>
       <div>
-        <div>Wisdom</div><div>{stats.wisdom}</div>
+        <div>Wisdom</div><div>{stats.wis}</div>
       </div>
       <div>
-        <div>Charisma</div><div>{stats.charisma}</div>
+        <div>Charisma</div><div>{stats.cha}</div>
       </div>
       <div>
-        <div>Hit points</div><div>{stats.hit_points}</div>
+        <div>Hit points</div><div>{stats.hp}</div>
       </div>
     </div>
 

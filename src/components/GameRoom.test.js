@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { act } from "react-dom/test-utils";
 import 'react-firebase-hooks/firestore';
 import { useCollectionData } from "react-firebase-hooks/firestore";
+import * as utils from "../utils";
 import GameRoom from "./GameRoom";
 
 jest.mock('react-firebase-hooks/firestore', () => ({
@@ -51,7 +52,16 @@ const user = {
 };
 
 const players = [
-  { name: "player1", uid: "abc" }, 
+  { 
+    name: "player1", 
+    uid: "abc",
+    str: 18,
+    dex: 8,
+    con: 6,
+    int: 24,
+    wis: 12,
+    cha: 10
+  }, 
   { name: "player2", uid: "def" },
   { name: "player3", uid: "ghi" },
   { name: "player4", uid: "jkl" }
@@ -273,6 +283,10 @@ describe("Commands", () => {
       expect(mockedFirestore[0].type).toBe("chat");
       expect(mockedFirestore[0].text).toBe("PLAYER1, make a STR skill check! (DC 20)");
       expect(mockedFirestore[0].target).toBe("abc");
+      expect(mockedFirestore[0].command).toEqual({
+        args: ["player1", "str", "20"], 
+        name: "skillcheck"
+      });
     });
   
     test("A player asked for a skill check should be able to see the roll button", async () => {
@@ -290,6 +304,7 @@ describe("Commands", () => {
       setPlayer("DM");
       await sendAction("/skillcheck player1 str 20");
       setPlayer("player2");    
+      renderGameRoom();
 
       const rollButton = screen.queryByTestId("roll");
 
@@ -306,7 +321,7 @@ describe("Commands", () => {
       expect(messages.length).toBe(2);
       expect(mockedFirestore[1].type).toBe("chat");
       expect(mockedFirestore[1].private).toBe(true);
-      expect(mockedFirestore[1].text).toBe("!!! player1 has already a skill check pending !!!");
+      expect(mockedFirestore[1].text).toBe("!!! player1 has a skill check pending !!!");
     });
 
     test("If there is a skill check pending, the DM should be able to ask another one to another player", async () => {
@@ -322,20 +337,53 @@ describe("Commands", () => {
       expect(mockedFirestore[1].target).toBe("def");
     });
 
+    // TODO also failure
+    test("A player should be able to roll the dice and make a successful skill check", async () => {
+      setPlayer("DM");
+      await sendAction("/skillcheck player1 str 20");
+      setPlayer("player1");
+      renderGameRoom();            
+      utils.d20 = () => 19;
+
+      await act(async () => {
+        userEvent.click(screen.getByTestId("roll"));      
+      })      
+      renderGameRoom();
+      
+      const messages = await screen.findAllByTestId("message");    
+      expect(messages.length).toBe(2);
+      expect(mockedFirestore[1].type).toBe("chat");
+      expect(mockedFirestore[1].text).toBe(
+        "PLAYER1 rolled a 19!\n" +
+        "19 + 4 = 23\n" +
+        "It's a success!"
+      );
+    });
+
+    // test("Rolling the dice should resolve the pending skill check", async () => {
+    // });
+
+    // test("If there is a resolved skill check, the DM should be able to ask another one to the same player", async () => {
+    // });
+
   });  
 
 });
 
-function renderGameRoom() {
-  render(
+let unmountGameRoom = () => null;
+
+const renderGameRoom = () => {
+  unmountGameRoom();
+  const { unmount } = render(
     <GameRoom 
       firebase={firebase} 
       firestore={firestore} 
       user={user}
-      characters={players}
+      characters={utils.buildCharacters(players)}
     />
   )
-}
+  unmountGameRoom = unmount;  
+};
 
 function setMessages(messages) {
   mockedFirestore = messages;

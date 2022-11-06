@@ -7,7 +7,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import SignIn from './components/SignIn';
 import SignOut from './components/SignOut';
 import GameRoom from './components/GameRoom';
-import { isDM, isPlayer } from './utils';
+import { buildCharacters, isDM, isPlayer } from './utils';
 import { slide as Menu } from 'react-burger-menu'
 import CharacterSheet from './components/CharacterSheet';
 import PlayersList from './components/PlayersList';
@@ -41,7 +41,7 @@ function App() {
     firestore
       .collection("characters")
       .get().then(r => 
-        setCharactersList(r.empty ? [] : r.docs.map(d => d.data()))
+        setCharactersList(r.empty ? [] : buildCharacters(r.docs.map(d => d.data())))
       );
   }
 

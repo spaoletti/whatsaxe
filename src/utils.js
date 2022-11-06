@@ -1,3 +1,5 @@
+// --------------------------------------- players ---------------------------------------
+
 export function isDM(uidObject) {
   return uidObject.uid === "78OjG96RrtZi5J3vqUChlmIdL503";
 }
@@ -9,6 +11,8 @@ export function isPlayer(uidObject) {
 export function isFromTheDM(message) {
   return message && isDM(message);
 }
+
+// --------------------------------------- messages ---------------------------------------
 
 export function getLastAction(messages) {
   return findLastMessage(messages, m => m.type === "action");
@@ -29,6 +33,26 @@ function findLastMessage(messages, condition) {
     }  
   }
   return null;
+}
+
+// --------------------------------------- dice ---------------------------------------
+
+export function d20() {
+  return Math.floor(Math.random() * 20) + 1;
+}
+
+// --------------------------------------- characters ---------------------------------------
+
+export function buildCharacters(docs) {
+  return docs.map(d => buildCharacter(d));
+}
+
+function buildCharacter(doc) {
+  doc.modifier = function(stat) {
+    const statValue = this[stat];
+    return (statValue - 10) / 2;
+  }
+  return doc;  
 }
 
 // --------------------------------------- commands ---------------------------------------
@@ -82,13 +106,14 @@ function buildSkillCheckMessage(command, characters, user, messages) {
   }
   const lastRollRequest = getLastRollRequest(messages, character);
   if (lastRollRequest && lastRollRequest.target === character.uid) {
-    return errorMessage(`${character.name} has already a skill check pending`);
+    return errorMessage(`${character.name} has a skill check pending`);
   }
   return {
     text: `${character.name.toUpperCase()}, make a ${command.args[1].toUpperCase()} skill check! (DC ${command.args[2]})`,
     photoURL: user.photoURL,
     type: "chat",
-    target: character.uid
+    target: character.uid,
+    command: command
   }
 }
 

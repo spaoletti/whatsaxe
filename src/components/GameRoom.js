@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollectionData } from "react-firebase-hooks/firestore";
-import { buildMessage, getLastAction, getLastRollRequest, isFromTheDM, isPlayer } from "../utils";
+import { buildMessage, d20, getLastAction, getLastRollRequest, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
-import RollButton from "./RollButton";
 
 export default function GameRoom(props) {
   const bottom = useRef();
@@ -22,10 +21,10 @@ export default function GameRoom(props) {
       );  
   }
   
-  const sendMessage = async (type) => {
+  const sendMessage = (type, text) => {
     setInputText("");
     const message = buildMessage(
-      inputText.trim(), 
+      text.trim(), 
       type, 
       props.user,
       props.characters,
@@ -41,6 +40,21 @@ export default function GameRoom(props) {
     })
   }
 
+  function roll(rollRequest) {
+    const die = d20();
+    const stat = rollRequest.command.args[1];
+    const dc = rollRequest.command.args[2];
+    const pc = props.characters.find(c => c.uid === props.user.uid);
+    const modifier = pc.modifier(stat);
+    const result = die + modifier;
+    const outcome = (result >= dc) ? "success" : "failure";
+    const message = 
+      `${pc.name.toUpperCase()} rolled a ${die}!\n` +
+      `${die} + ${modifier} = ${result}\n` +
+      `It's a ${outcome}!`
+    sendMessage("chat", message);
+  }
+
   const isChatDisabled = () => inputIsEmpty || inputText.charAt(0) === "/";
   
   const isActionDisabled = () => inputIsEmpty || (isPlayer(props.user) && !isFromTheDM(lastAction));
@@ -51,7 +65,7 @@ export default function GameRoom(props) {
       if (isChatDisabled()) {
         return;
       }
-      sendMessage("chat");
+      sendMessage("chat", inputText);
     }
   }
 
@@ -66,7 +80,11 @@ export default function GameRoom(props) {
           <ChatMessage key={idx} message={msg} user={props.user} />
         ))}
         <div ref={bottom}></div>
-        {rollRequest && <RollButton/>}
+        {rollRequest && 
+          <button onClick={() => roll(rollRequest)} data-testid="roll">
+            Roll the dice!
+          </button>
+        }
       </main>
       <form onKeyDown={handleKeyDown}>
         <input 
@@ -76,7 +94,7 @@ export default function GameRoom(props) {
         />
         <button 
           disabled={isChatDisabled()}
-          onClick={() => sendMessage("chat")} 
+          onClick={() => sendMessage("chat", inputText)} 
           data-testid="send" 
           type="button"
         >
@@ -84,7 +102,7 @@ export default function GameRoom(props) {
         </button>
         <button 
           disabled={isActionDisabled()} 
-          onClick={() => sendMessage("action")} 
+          onClick={() => sendMessage("action", inputText)} 
           data-testid="send-action" 
           type="button"
         >
