@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useCollectionData } from "react-firebase-hooks/firestore";
+import { useCollection } from "react-firebase-hooks/firestore";
 import { buildMessage, d20, getLastAction, getLastRollRequest, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
 
@@ -7,7 +7,8 @@ export default function GameRoom(props) {
   const bottom = useRef();
   const messagesRef = props.firestore.collection("messages");
   const query = messagesRef.orderBy("createdAt").limit(100);
-  const [messages] = useCollectionData(query);  
+  const [value] = useCollection(query);
+  const messages = value && value.docs.map(d => ({ ...d.data(), id: d.id }));
   const [inputText, setInputText] = useState("");
   const inputIsEmpty = inputText.trim().length === 0;
   const lastAction = getLastAction(messages);
@@ -40,6 +41,10 @@ export default function GameRoom(props) {
     })
   }
 
+  const resolveRollRequest = (rollRequest) => {
+    messagesRef.doc(rollRequest.id).update({ resolved: true });    
+  }
+
   function roll(rollRequest) {
     const die = d20();
     const stat = rollRequest.command.args[1];
@@ -52,6 +57,7 @@ export default function GameRoom(props) {
       `${pc.name.toUpperCase()} rolled a ${die}!\n` +
       `${die} + ${modifier} = ${result}\n` +
       `It's a ${outcome}!`
+    resolveRollRequest(rollRequest);
     sendMessage("chat", message);
   }
 
@@ -80,7 +86,7 @@ export default function GameRoom(props) {
           <ChatMessage key={idx} message={msg} user={props.user} />
         ))}
         <div ref={bottom}></div>
-        {rollRequest && 
+        {rollRequest &&
           <button onClick={(e) => roll(rollRequest)} data-testid="roll">
             Roll the dice!
           </button>
