@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { act } from "react-dom/test-utils";
 import 'react-firebase-hooks/firestore';
@@ -69,7 +69,7 @@ const players = [
 
 beforeEach(() => {
   setMessages([]);
-  renderGameRoom();
+  rerender();
 });
 
 describe("Basic game loop", () => {
@@ -78,7 +78,7 @@ describe("Basic game loop", () => {
     ["DM"], 
     ["player1"]
   ])("The %p can't send empty messages", async (player) => {
-    setPlayer(player);
+    sudo(player);
     await sendChat(" ");
     await sendAction(" ");
   
@@ -95,7 +95,7 @@ describe("Basic game loop", () => {
     ["DM"], 
     ["player1"]
   ])('if there are no messages the %p should be able to write a Chat', async (player) => {
-    setPlayer(player);
+    sudo(player);
     await sendChat("A message!");
   
     let messages = await screen.findAllByTestId("message");
@@ -104,7 +104,7 @@ describe("Basic game loop", () => {
   });
   
   test('if there are no messages the DM should be able to declare an Action', async () => {
-    setPlayer("DM");
+    sudo("DM");
     await sendAction("An action!");
   
     let messages = await screen.findAllByTestId("message");
@@ -113,7 +113,7 @@ describe("Basic game loop", () => {
   });
   
   test('if there are no messages the player should NOT be able to declare an Action', async () => {
-    setPlayer("player1");
+    sudo("player1");
     await sendAction("An action!");
   
     let noMessages = false;
@@ -129,9 +129,9 @@ describe("Basic game loop", () => {
     ["DM"], 
     ["player1"]
   ])('after an Action is sent by the %p, all Chats are deleted', async (player) => {
-    setPlayer("DM");
+    sudo("DM");
     await sendAction("Incipit!");
-    setPlayer(player);
+    sudo(player);
     await sendChat("Here's a message");
     await sendChat("Here's another");
     await sendAction("And an action");
@@ -143,11 +143,11 @@ describe("Basic game loop", () => {
   });
   
   test("A player should NOT be able to declare an Action without a previous Action from the DM", async () => {
-    setPlayer("player1");
+    sudo("player1");
     await sendChat("Here's a message from player");
-    setPlayer("DM");
+    sudo("DM");
     await sendChat("Here's a message from DM");
-    setPlayer("player1");
+    sudo("player1");
     await sendAction("Here's an Action from the player");
   
     const messages = await screen.findAllByTestId("message");
@@ -157,9 +157,9 @@ describe("Basic game loop", () => {
   });
   
   test("A player should be able to declare an Action after an Action from the DM", async () => {
-    setPlayer("DM");
+    sudo("DM");
     await sendAction("Incipit!");
-    setPlayer("player1");
+    sudo("player1");
     await sendAction("Here's an Action from the player");
   
     const messages = await screen.findAllByTestId("message");
@@ -169,11 +169,11 @@ describe("Basic game loop", () => {
   });
   
   test("A player should NOT be able to declare an Action after another player's Action", async () => {
-    setPlayer("DM");
+    sudo("DM");
     await sendAction("Incipit");
-    setPlayer("player1");
+    sudo("player1");
     await sendAction("Action!");
-    setPlayer("player1");
+    sudo("player1");
     await sendAction("Another action!");
   
     const messages = await screen.findAllByTestId("message");
@@ -188,11 +188,10 @@ describe("Basic game loop", () => {
 describe("Commands", () => {
 
   test("A DM should be able to send an unknown command and receive an error message", async () => {
-    setPlayer("DM");
+    sudo("DM");
     await sendAction("/someWrongCommand");
   
     const messages = await screen.findAllByTestId("message");
-  
     expect(messages.length).toBe(1);
     expect(mockedFirestore[0].type).toBe("chat");
     expect(mockedFirestore[0].private).toBe(true);
@@ -200,24 +199,22 @@ describe("Commands", () => {
   });
   
   test("A wrong command from the DM should not delete chats", async () => {
-    setPlayer("DM");
+    sudo("DM");
     await sendChat("A chat");
     await sendChat("Another chat");
     await sendAction("/someWrongCommand");
   
     const messages = await screen.findAllByTestId("message");
-  
     expect(messages.length).toBe(3);
   });
   
   test("A player should NOT be able to send commands", async () => {
-    setPlayer("DM");
+    sudo("DM");
     await sendAction("Incipit!");
-    setPlayer("player1");
+    sudo("player1");
     await sendAction("/someCommand");
   
     const messages = await screen.findAllByTestId("message");
-  
     expect(messages.length).toBe(2);
     expect(mockedFirestore[1].type).toBe("action");
     expect(mockedFirestore[1].text).toBe("/someCommand");
@@ -226,11 +223,10 @@ describe("Commands", () => {
   describe("/skillcheck", () => {
 
     test("When a DM asks a non existing player to make a skill check, he should receive an error message", async () => {
-      setPlayer("DM");
+      sudo("DM");
       await sendAction("/skillcheck nonexisting str 20");
     
       const messages = await screen.findAllByTestId("message");
-    
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].type).toBe("chat");
       expect(mockedFirestore[0].private).toBe(true);
@@ -238,11 +234,10 @@ describe("Commands", () => {
     });
     
     test("When a DM asks a player to make a skill check on a wrong stat, he should receive an error message", async () => {
-      setPlayer("DM");
+      sudo("DM");
       await sendAction("/skillcheck player1 xxx 20");
     
       const messages = await screen.findAllByTestId("message");
-    
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].type).toBe("chat");
       expect(mockedFirestore[0].private).toBe(true);
@@ -250,11 +245,10 @@ describe("Commands", () => {
     });
     
     test("When a DM asks a player to make a skill check on a DC that's not a number, he should receive an error message", async () => {
-      setPlayer("DM");
+      sudo("DM");
       await sendAction("/skillcheck player1 str xx");
     
       const messages = await screen.findAllByTestId("message");
-    
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].type).toBe("chat");
       expect(mockedFirestore[0].private).toBe(true);
@@ -262,11 +256,10 @@ describe("Commands", () => {
     });
     
     test("A skill check command should have 3 arguments, or it throws an error message", async () => {
-      setPlayer("DM");
+      sudo("DM");
       await sendAction("/skillcheck");
     
       const messages = await screen.findAllByTestId("message");
-    
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].type).toBe("chat");
       expect(mockedFirestore[0].private).toBe(true);
@@ -274,11 +267,10 @@ describe("Commands", () => {
     });
     
     test("A DM should be able to ask for a skill check", async () => {
-      setPlayer("DM");
+      sudo("DM");
       await sendAction("/skillcheck player1 str 20");
     
       const messages = await screen.findAllByTestId("message");
-    
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].type).toBe("chat");
       expect(mockedFirestore[0].text).toBe("PLAYER1, make a STR skill check! (DC 20)");
@@ -290,34 +282,29 @@ describe("Commands", () => {
     });
   
     test("A player asked for a skill check should be able to see the roll button", async () => {
-      setPlayer("DM");
+      sudo("DM");
       await sendAction("/skillcheck player1 str 20");
-      setPlayer("player1");      
-      renderGameRoom();
+      sudo("player1");      
 
       const rollButton = screen.queryByTestId("roll");
-
       expect(rollButton).toBeTruthy();
     });
 
     test("ONLY the player asked for a skill check should be able to see the roll button", async () => {
-      setPlayer("DM");
+      sudo("DM");
       await sendAction("/skillcheck player1 str 20");
-      setPlayer("player2");    
-      renderGameRoom();
+      sudo("player2");    
 
       const rollButton = screen.queryByTestId("roll");
-
       expect(rollButton).toBeFalsy();
     });
 
     test("If there is a skill check pending, the DM should NOT be able to ask another one to the same player", async () => {
-      setPlayer("DM");
+      sudo("DM");
       await sendAction("/skillcheck player1 str 20");
       await sendAction("/skillcheck player1 dex 20");
 
       const messages = await screen.findAllByTestId("message");    
-
       expect(messages.length).toBe(2);
       expect(mockedFirestore[1].type).toBe("chat");
       expect(mockedFirestore[1].private).toBe(true);
@@ -325,38 +312,33 @@ describe("Commands", () => {
     });
 
     test("If there is a skill check pending, the DM should be able to ask another one to another player", async () => {
-      setPlayer("DM");
+      sudo("DM");
       await sendAction("/skillcheck player1 str 20");
       await sendAction("/skillcheck player2 dex 20");
 
       const messages = await screen.findAllByTestId("message");    
-
       expect(messages.length).toBe(2);
       expect(mockedFirestore[1].type).toBe("chat");
       expect(mockedFirestore[1].text).toBe("PLAYER2, make a DEX skill check! (DC 20)");
       expect(mockedFirestore[1].target).toBe("def");
     });
 
-    // TODO also failure
-    test("A player should be able to roll the dice and make a successful skill check", async () => {
-      setPlayer("DM");
+    test.each([
+      [19, "success"], 
+      [2, "failure"]
+    ])("A player should be able to roll a %p and make a %p skill check", async (die, outcome) => {
+      sudo("DM");
       await sendAction("/skillcheck player1 str 20");
-      setPlayer("player1");
-      renderGameRoom();            
-      utils.d20 = () => 19;
-
-      await act(async () => {
-        userEvent.click(screen.getByTestId("roll"));      
-      })      
-      renderGameRoom();
+      sudo("player1");
+      await roll(die);
       
       const messages = await screen.findAllByTestId("message");    
       expect(messages.length).toBe(2);
       expect(mockedFirestore[1].type).toBe("chat");
       expect(mockedFirestore[1].text).toBe(
-        "PLAYER1 rolled a 19!\n" +
-        "19 + 4 = 23\n" +
-        "It's a success!"
+        `PLAYER1 rolled a ${die}!\n` +
+        `${die} + 4 = ${die + 4}\n` +
+        `It's a ${outcome}!`
       );
     });
 
@@ -370,11 +352,9 @@ describe("Commands", () => {
 
 });
 
-let unmountGameRoom = () => null;
-
-const renderGameRoom = () => {
-  unmountGameRoom();
-  const { unmount } = render(
+const rerender = () => {
+  cleanup();
+  render(
     <GameRoom 
       firebase={firebase} 
       firestore={firestore} 
@@ -382,7 +362,6 @@ const renderGameRoom = () => {
       characters={utils.buildCharacters(players)}
     />
   )
-  unmountGameRoom = unmount;  
 };
 
 function setMessages(messages) {
@@ -395,12 +374,13 @@ function addMessage(message) {
   useCollectionData.mockImplementation(() => [mockedFirestore]);
 }
 
-function setPlayer(name) {
+function sudo(name) {
   if (name == "DM") {
     user.uid = "78OjG96RrtZi5J3vqUChlmIdL503";
   } else {
     user.uid = players.find(p => p.name === name).uid;
   }
+  rerender();
 }
 
 const sendChat = async (text) => act(async () => { 
@@ -411,4 +391,10 @@ const sendChat = async (text) => act(async () => {
 const sendAction = async (text) => act(async () => { 
   userEvent.type(screen.getByTestId("text"), text);
   userEvent.click(screen.getByTestId("send-action"));
+});
+
+const roll = async (n) => act(async () => { 
+  utils.d20 = () => n;
+  userEvent.click(screen.getByTestId("roll"));
+  rerender(); // click doesn't trigger rerender for some reason
 });

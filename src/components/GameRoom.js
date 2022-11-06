@@ -81,7 +81,7 @@ export default function GameRoom(props) {
         ))}
         <div ref={bottom}></div>
         {rollRequest && 
-          <button onClick={() => roll(rollRequest)} data-testid="roll">
+          <button onClick={(e) => roll(rollRequest)} data-testid="roll">
             Roll the dice!
           </button>
         }
