@@ -5,7 +5,6 @@ import 'firebase/compat/firestore';
 import 'firebase/compat/auth';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import SignIn from './components/SignIn';
-import SignOut from './components/SignOut';
 import GameRoom from './components/GameRoom';
 import { buildCharacters, isDM, isPlayer } from './utils';
 import { slide as Menu } from 'react-burger-menu'
@@ -99,13 +98,13 @@ function App() {
             <div onClick={() => {handleMenuClick("gameRoom")}}>Game room</div>
             {isPlayer(user) && <div onClick={() => {handleMenuClick("characterSheet")}}>Character sheet</div>}
             <div onClick={() => {handleMenuClick("party")}}>Party</div>
+            <div onClick={() => auth.signOut()}>Sign out</div>
           </Menu>
         }
         <div className='logo'>
           <img alt='whatsaxe' src="./whatsaxe.png" /><div>WhatsAxe</div>
         </div>
         {user && isDM(user) && <div>You are the DM</div>}
-        {user && <SignOut auth={auth} />}
       </header>
       <section>
         {render(page)}

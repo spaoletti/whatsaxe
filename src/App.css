@@ -13,7 +13,7 @@ body {
 
 .App header {
   background-color: #264c5e;
-  height: 10vh;
+  height: 60px;
   min-height: 50px;
   color: white;
   position: fixed;
@@ -24,7 +24,7 @@ body {
   align-items: center;
   justify-content: space-between;
   z-index: 99;
-  padding: 10px;
+  /* padding: 10px; */
   box-sizing: border-box;
 }
 
@@ -39,14 +39,14 @@ body {
 main {
   padding: 10px;
   height: 80vh;
-  margin: 10vh 0 10vh;
+  margin: 60px 0 54px;
   overflow-y: scroll;
   display: flex;
   flex-direction: column;
 }
 
 main::-webkit-scrollbar {
-  width: 10px;
+  width: 5px;
 }
 
 main::-webkit-scrollbar-track {
@@ -58,20 +58,23 @@ main::-webkit-scrollbar-thumb {
 }
 
 form {
-  height: 10vh;
+  height: 8vh;
   position: fixed;
   bottom: 0;
-  background-color: rgb(24, 23, 23);
+  background-color: #e8443c;
   width: 100%;
   max-width: 728px;
   display: flex;
-  font-size: 1.5rem;
+  font-size: large;
+  align-items: center;
 }
 
 input {
   line-height: 1.5;
   width: 100%;
-  font-size: 1.5rem;
+  height: 43px;
+  margin: 4px 0 4px 4px;
+  font-size: large;
   color: black;
   outline: none;
   border: 1px solid;
@@ -80,18 +83,20 @@ input {
 }
 
 button {
-  background-color: #cec2ae;
+  background-color: #264c5e;
   border: none;
-  padding: 15px 32px;
+  margin: 4px 0 4px 4px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   cursor: pointer;
-  font-size: 1.25rem;
-  color: black;
-  width: 170px;
+  font-size: small;
+  color: white;
+  width: 70px;
+  height: 40px;
   border: 1px solid;
   border-color: black;
+  border-radius: 20px;
 }
 
 button:disabled {
@@ -100,10 +105,9 @@ button:disabled {
 }
 
 .sign-in {
-  color: #282c34;
-  background: white;
-  max-width: 400px;
-  margin: 0 auto;
+  height: 60px;
+  width: 200px;
+  font-size: large;
 }
 
 ul,
@@ -114,19 +118,18 @@ li {
 
 p {
   max-width: 500px;
-  margin-bottom: 12px;
-  line-height: 24px;
-  padding: 10px 20px;
+  margin: 0;
+  padding: 7px 10px;
   border-radius: 10px;
   position: relative;
-  color: white;
-  text-align: center;
+  text-align: left;
   white-space: pre-wrap;
 }
 
 .message {
   display: flex;
   align-items: center;
+  margin-bottom: 6px;
 }
 
 .sent {
@@ -144,14 +147,12 @@ p {
   background: white;
 }
 
-.action {
-  margin-left: 100px;
-  margin-right: 100px;
-}
-
 .action p {
   color: black;
   background: yellow;
+  border-width: 2px;
+  border-style: solid;
+  border-color: white;
 }
 
 .dm-action p {
@@ -159,8 +160,8 @@ p {
 }
 
 img {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   margin: 2px 5px;
 }
@@ -168,11 +169,11 @@ img {
 .logo {
   display: flex;
   align-items: center;
-  font-size: xx-large;
+  font-size: x-large;
 }
 
 .logo div {
-  margin-left: 10px;
+  margin: 0 10px;
 }
 
 
@@ -181,8 +182,8 @@ img {
 /* Position and sizing of burger button */
 .bm-burger-button {
   position: relative;
-  width: 36px;
-  height: 30px;
+  width: 25px;
+  height: 20px;
   margin: 0 20px 0 20px;
 }
 

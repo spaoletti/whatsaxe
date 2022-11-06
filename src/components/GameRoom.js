@@ -86,13 +86,17 @@ export default function GameRoom(props) {
           <ChatMessage key={idx} message={msg} user={props.user} />
         ))}
         <div ref={bottom}></div>
-        {rollRequest && !rollRequest.resolved &&
-          <button onClick={(e) => roll(rollRequest)} data-testid="roll">
-            Roll the dice!
-          </button>
-        }
       </main>
       <form onKeyDown={handleKeyDown}>
+        {rollRequest && !rollRequest.resolved &&
+          <button 
+            onClick={(e) => roll(rollRequest)} 
+            data-testid="roll" 
+            type="button"
+          >
+            Roll
+          </button>
+        }
         <input 
           data-testid="text" 
           value={inputText} 
@@ -112,7 +116,7 @@ export default function GameRoom(props) {
           data-testid="send-action" 
           type="button"
         >
-          Play!
+          Play
         </button>
       </form>
     </>
