@@ -121,6 +121,7 @@ p {
   position: relative;
   color: white;
   text-align: center;
+  white-space: pre-wrap;
 }
 
 .message {

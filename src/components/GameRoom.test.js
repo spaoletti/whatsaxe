@@ -351,11 +351,18 @@ describe("Commands", () => {
       expect(mockedFirestore[0].data().resolved).toBe(true);
     });
 
+    test("The player should not see the roll button if the last skill check is resolved", async () => {
+      sudo("DM");
+      await sendAction("/skillcheck player1 str 20");
+      sudo("player1");
+      await roll();
+
+      expect(screen.queryByTestId("roll")).toBeNull();
+    });
+
     // test("If there is a resolved skill check, the DM should be able to ask another one to the same player", async () => {
     // });
 
-    // test("The player should not see the roll button if the last skill check is resolved", async () => {
-    // });
 
   });  
 

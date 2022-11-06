@@ -86,7 +86,7 @@ export default function GameRoom(props) {
           <ChatMessage key={idx} message={msg} user={props.user} />
         ))}
         <div ref={bottom}></div>
-        {rollRequest &&
+        {rollRequest && !rollRequest.resolved &&
           <button onClick={(e) => roll(rollRequest)} data-testid="roll">
             Roll the dice!
           </button>
