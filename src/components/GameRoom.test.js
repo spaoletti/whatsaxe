@@ -360,9 +360,22 @@ describe("Commands", () => {
       expect(screen.queryByTestId("roll")).toBeNull();
     });
 
-    // test("If there is a resolved skill check, the DM should be able to ask another one to the same player", async () => {
-    // });
+    test("If there is a resolved skill check, the DM should be able to ask another one to the same player", async () => {
+      sudo("DM");
+      await sendAction("/skillcheck player1 dex 15");
+      sudo("player1");
+      await roll();
+      sudo("DM");
+      await sendAction("/skillcheck player1 str 20");
 
+      const messages = await screen.findAllByTestId("message");    
+      expect(messages.length).toBe(3);
+      expect(mockedFirestore[2].data().type).toBe("chat");
+      expect(mockedFirestore[2].data().text).toBe("PLAYER1, make a STR skill check! (DC 20)");
+    });
+
+    // test("Private messages should be visible only by the receiver", async () => {
+    // });
 
   });  
 
@@ -382,9 +395,7 @@ const rerender = () => {
 
 function clearFirestore() {
   mockedFirestore = [];
-  useCollection.mockImplementation(() => [{
-    docs: mockedFirestore
-  }]);
+  updateUseCollectionMock();
 }
 
 function addMessage(message) {
@@ -394,6 +405,10 @@ function addMessage(message) {
       ...message
     })
   });
+  updateUseCollectionMock();
+}
+
+function updateUseCollectionMock() {
   useCollection.mockImplementation(() => [{
     docs: mockedFirestore
   }]);

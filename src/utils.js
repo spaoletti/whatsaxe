@@ -105,7 +105,7 @@ function buildSkillCheckMessage(command, characters, user, messages) {
     return errorMessage(`DC must be a number. Provided: ${command.args[2]}`);
   }
   const lastRollRequest = getLastRollRequest(messages, character);
-  if (lastRollRequest && lastRollRequest.target === character.uid) {
+  if (lastRollRequest && lastRollRequest.target === character.uid && !lastRollRequest.resolved) {
     return errorMessage(`${character.name} has a skill check pending`);
   }
   return {
