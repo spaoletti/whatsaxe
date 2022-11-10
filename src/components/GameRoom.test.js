@@ -101,7 +101,7 @@ describe("Basic game loop", () => {
     sudo(player);
     await sendChat("A message!");
   
-    let messages = await screen.findAllByTestId("message");
+    let messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(1);
     expect(mockedFirestore[0].data().type).toBe("chat");
   });
@@ -110,7 +110,7 @@ describe("Basic game loop", () => {
     sudo("DM");
     await sendAction("An action!");
   
-    let messages = await screen.findAllByTestId("message");
+    let messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(1);
     expect(mockedFirestore[0].data().type).toBe("action");
   });
@@ -134,7 +134,7 @@ describe("Basic game loop", () => {
     await sendChat("Here's another");
     await sendAction("And an action");
   
-    const messages = await screen.findAllByTestId("message");
+    const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(2);
     expect(mockedFirestore[0].data().type).toBe("action");
     expect(mockedFirestore[1].data().type).toBe("action");
@@ -148,7 +148,7 @@ describe("Basic game loop", () => {
     sudo("player1");
     await sendAction("Here's an Action from the player");
   
-    const messages = await screen.findAllByTestId("message");
+    const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(2);
     expect(mockedFirestore[0].data().type).toBe("chat");
     expect(mockedFirestore[1].data().type).toBe("chat");
@@ -160,7 +160,7 @@ describe("Basic game loop", () => {
     sudo("player1");
     await sendAction("Here's an Action from the player");
   
-    const messages = await screen.findAllByTestId("message");
+    const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(2);
     expect(mockedFirestore[0].data().type).toBe("action");
     expect(mockedFirestore[1].data().type).toBe("action");
@@ -174,7 +174,7 @@ describe("Basic game loop", () => {
     sudo("player1");
     await sendAction("Another action!");
   
-    const messages = await screen.findAllByTestId("message");
+    const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(2);
     expect(mockedFirestore[0].data().type).toBe("action");
     expect(mockedFirestore[1].data().type).toBe("action");
@@ -189,7 +189,7 @@ describe("Commands", () => {
     sudo("DM");
     await sendAction("/someWrongCommand");
   
-    const messages = await screen.findAllByTestId("message");
+    const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(1);
     expect(mockedFirestore[0].data().type).toBe("chat");
     expect(mockedFirestore[0].data().private).toBe(true);
@@ -202,7 +202,7 @@ describe("Commands", () => {
     await sendChat("Another chat");
     await sendAction("/someWrongCommand");
   
-    const messages = await screen.findAllByTestId("message");
+    const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(3);
   });
   
@@ -212,7 +212,7 @@ describe("Commands", () => {
     sudo("player1");
     await sendAction("/someCommand");
   
-    const messages = await screen.findAllByTestId("message");
+    const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(2);
     expect(mockedFirestore[1].data().type).toBe("action");
     expect(mockedFirestore[1].data().text).toBe("/someCommand");
@@ -224,7 +224,7 @@ describe("Commands", () => {
       sudo("DM");
       await sendAction("/skillcheck nonexisting str 20");
     
-      const messages = await screen.findAllByTestId("message");
+      const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].data().type).toBe("chat");
       expect(mockedFirestore[0].data().private).toBe(true);
@@ -235,7 +235,7 @@ describe("Commands", () => {
       sudo("DM");
       await sendAction("/skillcheck player1 xxx 20");
     
-      const messages = await screen.findAllByTestId("message");
+      const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].data().type).toBe("chat");
       expect(mockedFirestore[0].data().private).toBe(true);
@@ -246,7 +246,7 @@ describe("Commands", () => {
       sudo("DM");
       await sendAction("/skillcheck player1 str xx");
     
-      const messages = await screen.findAllByTestId("message");
+      const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].data().type).toBe("chat");
       expect(mockedFirestore[0].data().private).toBe(true);
@@ -257,7 +257,7 @@ describe("Commands", () => {
       sudo("DM");
       await sendAction("/skillcheck");
     
-      const messages = await screen.findAllByTestId("message");
+      const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].data().type).toBe("chat");
       expect(mockedFirestore[0].data().private).toBe(true);
@@ -268,7 +268,7 @@ describe("Commands", () => {
       sudo("DM");
       await sendAction("/skillcheck player1 str 20");
     
-      const messages = await screen.findAllByTestId("message");
+      const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].data().type).toBe("chat");
       expect(mockedFirestore[0].data().text).toBe("PLAYER1, make a STR skill check! (DC 20)");
@@ -302,7 +302,7 @@ describe("Commands", () => {
       await sendAction("/skillcheck player1 str 20");
       await sendAction("/skillcheck player1 dex 20");
 
-      const messages = await screen.findAllByTestId("message");    
+      const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
       expect(mockedFirestore[1].data().type).toBe("chat");
       expect(mockedFirestore[1].data().private).toBe(true);
@@ -314,7 +314,7 @@ describe("Commands", () => {
       await sendAction("/skillcheck player1 str 20");
       await sendAction("/skillcheck player2 dex 20");
 
-      const messages = await screen.findAllByTestId("message");    
+      const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
       expect(mockedFirestore[1].data().type).toBe("chat");
       expect(mockedFirestore[1].data().text).toBe("PLAYER2, make a DEX skill check! (DC 20)");
@@ -330,7 +330,7 @@ describe("Commands", () => {
       sudo("player1");
       await roll(die);
       
-      const messages = await screen.findAllByTestId("message");    
+      const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
       expect(mockedFirestore[1].data().type).toBe("chat");
       expect(mockedFirestore[1].data().text).toBe(
@@ -346,7 +346,7 @@ describe("Commands", () => {
       sudo("player1");
       await roll();
 
-      const messages = await screen.findAllByTestId("message");    
+      const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
       expect(mockedFirestore[0].data().resolved).toBe(true);
     });
@@ -368,7 +368,7 @@ describe("Commands", () => {
       sudo("DM");
       await sendAction("/skillcheck player1 str 20");
 
-      const messages = await screen.findAllByTestId("message");    
+      const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(3);
       expect(mockedFirestore[2].data().type).toBe("chat");
       expect(mockedFirestore[2].data().text).toBe("PLAYER1, make a STR skill check! (DC 20)");
@@ -378,7 +378,7 @@ describe("Commands", () => {
       sudo("DM");
       await sendAction("/randomstuff");
 
-      let messages = await screen.findAllByTestId("message");    
+      let messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].data().type).toBe("chat");
       expect(mockedFirestore[0].data().text).toBe("!!! Unknown command: randomstuff !!!");
