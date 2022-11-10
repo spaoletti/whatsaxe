@@ -374,8 +374,20 @@ describe("Commands", () => {
       expect(mockedFirestore[2].data().text).toBe("PLAYER1, make a STR skill check! (DC 20)");
     });
 
-    // test("Private messages should be visible only by the receiver", async () => {
-    // });
+    test("Private messages should be visible only by the receiver", async () => {
+      sudo("DM");
+      await sendAction("/randomstuff");
+
+      let messages = await screen.findAllByTestId("message");    
+      expect(messages.length).toBe(1);
+      expect(mockedFirestore[0].data().type).toBe("chat");
+      expect(mockedFirestore[0].data().text).toBe("!!! Unknown command: randomstuff !!!");
+
+      sudo("player1");
+
+      messages = screen.queryAllByTestId("message");    
+      expect(messages.length).toBe(0);
+    });
 
   });  
 

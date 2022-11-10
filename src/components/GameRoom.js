@@ -82,9 +82,12 @@ export default function GameRoom(props) {
   return (
     <>
       <main>
-        {messages && messages.map((msg, idx) => (
-          <ChatMessage key={idx} message={msg} user={props.user} />
-        ))}
+        {messages && messages
+          .filter(m => !m.private || m.uid === props.user.uid)
+          .map((msg, idx) => (
+            <ChatMessage key={idx} message={msg} user={props.user} />
+          ))
+        }
         <div ref={bottom}></div>
       </main>
       <form onKeyDown={handleKeyDown}>
