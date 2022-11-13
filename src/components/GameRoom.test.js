@@ -181,6 +181,21 @@ describe("Basic game loop", () => {
     expect(mockedFirestore[1].data().text).toBe("Action!");
   });
 
+  test("Private messages should be visible only by the receiver", async () => {
+    sudo("DM");
+    await sendAction("/randomstuff");
+
+    let messages = screen.queryAllByTestId("message");    
+    expect(messages.length).toBe(1);
+    expect(mockedFirestore[0].data().type).toBe("chat");
+    expect(mockedFirestore[0].data().text).toBe("!!! Unknown command: randomstuff !!!");
+
+    sudo("player1");
+
+    messages = screen.queryAllByTestId("message");    
+    expect(messages.length).toBe(0);
+  });
+
 });
 
 describe("Commands", () => {
@@ -374,22 +389,33 @@ describe("Commands", () => {
       expect(mockedFirestore[2].data().text).toBe("PLAYER1, make a STR skill check! (DC 20)");
     });
 
-    test("Private messages should be visible only by the receiver", async () => {
-      sudo("DM");
-      await sendAction("/randomstuff");
+  });  
 
-      let messages = screen.queryAllByTestId("message");    
+  describe("/hit", () => {
+
+    test("When a DM hit a non existing player, he should receive an error message", async () => {
+      sudo("DM");
+      await sendAction("/hit nonexisting 1d8");
+    
+      const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].data().type).toBe("chat");
-      expect(mockedFirestore[0].data().text).toBe("!!! Unknown command: randomstuff !!!");
-
-      sudo("player1");
-
-      messages = screen.queryAllByTestId("message");    
-      expect(messages.length).toBe(0);
+      expect(mockedFirestore[0].data().private).toBe(true);
+      expect(mockedFirestore[0].data().text).toBe("!!! Unknown player: nonexisting !!!");
     });
 
-  });  
+    test("A hit command should have 2 arguments, or it throws an error message", async () => {
+      sudo("DM");
+      await sendAction("/hit");
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(mockedFirestore[0].data().type).toBe("chat");
+      expect(mockedFirestore[0].data().private).toBe(true);
+      expect(mockedFirestore[0].data().text).toBe("!!! Wrong number of arguments. Correct syntax: /hit <player_name> <roll> !!!");
+    });
+
+  });
 
 });
 

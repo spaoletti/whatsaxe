@@ -12,6 +12,10 @@ export function isFromTheDM(message) {
   return message && isDM(message);
 }
 
+function getCharacterByName(characters, name) {
+  return characters.find(c => c.name.toLowerCase() === name.toLowerCase());
+}
+
 // --------------------------------------- messages ---------------------------------------
 
 export function getLastAction(messages) {
@@ -57,9 +61,10 @@ function buildCharacter(doc) {
 
 // --------------------------------------- commands ---------------------------------------
 
-const validCommands = [
-  "skillcheck"
-];
+const commands = {
+  skillcheck: buildSkillCheckMessage,
+  hit: buildHitMessage
+}
 
 export function parseCommand(commandString) {
   const tokens = commandString.split(" ");
@@ -72,10 +77,11 @@ export function parseCommand(commandString) {
 export function buildMessage(text, type, user, characters, messages) {
   if (isCommand(text, type, user)) {
     const command = parseCommand(text);
-    if (!validCommands.includes(command.name)) {
+    if (!commands[command.name]) {
       return errorMessage(`Unknown command: ${command.name}`);
     } 
-    return buildSkillCheckMessage(command, characters, user, messages);
+    const build = commands[command.name];
+    return build(command, characters, user, messages);
   }   
   return {
     text: text,
@@ -94,7 +100,7 @@ function buildSkillCheckMessage(command, characters, user, messages) {
   if (command.args.length !== 3) {
     return errorMessage(`Wrong number of arguments. Correct syntax: /skillcheck <player_name> <stat> <DC>`);
   }
-  const character = characters.find(c => c.name.toLowerCase() === command.args[0].toLowerCase());
+  const character = getCharacterByName(characters, command.args[0]);
   if (!character) {
     return errorMessage(`Unknown player: ${command.args[0]}`);
   }
@@ -114,6 +120,16 @@ function buildSkillCheckMessage(command, characters, user, messages) {
     type: "chat",
     target: character.uid,
     command: command
+  }
+}
+
+function buildHitMessage(command, characters) {
+  if (command.args.length !== 2) {
+    return errorMessage(`Wrong number of arguments. Correct syntax: /hit <player_name> <roll>`);
+  }
+  const character = getCharacterByName(characters, command.args[0]);
+  if (!character) {
+    return errorMessage(`Unknown player: ${command.args[0]}`);
   }
 }
 
