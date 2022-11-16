@@ -5,9 +5,9 @@ export default function CharacterSheet(props) {
   const query = props.firestore
     .collection("characters")
     .where("uid", "==", props.user.uid);
-  const [sheet, loading] = useCollection(query);
+  const [sheet] = useCollection(query);
 
-  if (loading) {
+  if (!sheet) {
     return <div>Loading</div>;
   } else if (sheet.empty) {
     return <div>You haven't created a character yet!</div>;

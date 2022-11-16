@@ -83,7 +83,8 @@ function App() {
         />;    
       case "party":
         return <PlayersList
-          list={charactersList}
+          firestore={firestore}
+          user={user}
         />;  
       default:
         return <div>Loading</div>;

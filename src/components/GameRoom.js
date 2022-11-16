@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { buildMessage, d20, getLastAction, getLastRollRequest, isFromTheDM, isPlayer } from "../utils";
+import { buildCharacters, buildMessage, d20, getLastAction, getLastRollRequest, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
   const bottom = useRef();
   const messagesRef = props.firestore.collection("messages");
-  const query = messagesRef.orderBy("createdAt").limit(100);
-  const [value] = useCollection(query);
-  const messages = value && value.docs.map(d => ({ ...d.data(), id: d.id }));
+  const messagesQuery = messagesRef.orderBy("createdAt").limit(100);
+  const [messagesSnapshot] = useCollection(messagesQuery);
+  const messages = messagesSnapshot && messagesSnapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+  const charactersQuery = props.firestore.collection("characters");
+  const [charactersSnapshot] = useCollection(charactersQuery);
+  const characters = 
+    charactersSnapshot && 
+    buildCharacters(charactersSnapshot.docs.map(d => d.data()));
   const [inputText, setInputText] = useState("");
   const inputIsEmpty = inputText.trim().length === 0;
   const lastAction = getLastAction(messages);
@@ -28,7 +33,7 @@ export default function GameRoom(props) {
       text.trim(), 
       type, 
       props.user,
-      props.characters,
+      characters,
       messages
     );
     if (message.type === "action") {
@@ -49,7 +54,7 @@ export default function GameRoom(props) {
     const die = d20();
     const stat = rollRequest.command.args[1];
     const dc = rollRequest.command.args[2];
-    const pc = props.characters.find(c => c.uid === props.user.uid);
+    const pc = characters.find(c => c.uid === props.user.uid);
     const modifier = pc.modifier(stat);
     const result = die + modifier;
     const outcome = (result >= dc) ? "success" : "failure";
@@ -92,7 +97,8 @@ export default function GameRoom(props) {
       </main>
       <form onKeyDown={handleKeyDown}>
         {rollRequest && !rollRequest.resolved &&
-          <button 
+          <button
+            disabled={!characters} 
             onClick={(e) => roll(rollRequest)} 
             data-testid="roll" 
             type="button"
@@ -106,7 +112,7 @@ export default function GameRoom(props) {
           onChange={(e) => setInputText(e.target.value)} 
         />
         <button 
-          disabled={isChatDisabled()}
+          disabled={!characters || isChatDisabled()}
           onClick={() => sendMessage("chat", inputText)} 
           data-testid="send" 
           type="button"
@@ -114,7 +120,7 @@ export default function GameRoom(props) {
           Chat
         </button>
         <button 
-          disabled={isActionDisabled()} 
+          disabled={!characters || isActionDisabled()} 
           onClick={() => sendMessage("action", inputText)} 
           data-testid="send-action" 
           type="button"

@@ -1,26 +1,22 @@
+import { useCollection } from "react-firebase-hooks/firestore";
+
 export default function PlayersList(props) {
 
   function render(list) {
     if (!list) {
-      return loading;
-    } else if (list.length === 0) {
-      return noPlayersList;
+      return <div>Loading</div>;
+    } else if (list.empty) {
+      return <div>There are no players!</div>;
     } else {
-      return playersList(list);
+      return <div>
+        {list.docs.map((c, idx) => <div key={idx}>{c.data().name}</div>)}
+      </div>;
     }
   }
 
-  const loading = 
-    <div>Loading</div>;
+  const query = props.firestore.collection("characters");
+  const [characterList] = useCollection(query);
 
-  const noPlayersList =
-    <div>There are no players!</div>;
-
-  const playersList = (list) =>
-    <div>
-      {list.map((c, idx) => 
-        <div key={idx}>{c.name}</div>)}
-    </div>
-
-  return render(props.list);
+  return render(characterList);
+  
 }
