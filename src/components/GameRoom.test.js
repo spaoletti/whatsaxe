@@ -59,7 +59,7 @@ const user = {
   uid: ""
 };
 
-const players = [
+const characters = utils.buildCharacters([
   { 
     name: "player1", 
     uid: "abc",
@@ -69,12 +69,13 @@ const players = [
     int: 24,
     wis: 12,
     cha: 10,
-    hp: 15
+    hp: 15,
+    maxhp: 15
   }, 
   { name: "player2", uid: "def" },
   { name: "player3", uid: "ghi" },
   { name: "player4", uid: "jkl" }
-];
+]);
 
 beforeEach(() => {
   clearFirestore();
@@ -442,6 +443,16 @@ describe("Commands", () => {
       });
     });
 
+    test("A player targeted with a hit command should lose hit points", async () => {
+      sudo("DM");
+      await sendAction("/hit player1 6");
+      sudo("player1");
+
+      const character = characters.find(p => p.name === "player1");
+      expect(character.hp).toBe(9);
+      character.hp = character.maxhp;
+    });
+
   });
 
 });
@@ -453,7 +464,7 @@ const rerender = () => {
       firebase={firebase} 
       firestore={firestore} 
       user={user}
-      characters={utils.buildCharacters(players)}
+      characters={characters}
     />
   )
 };
@@ -483,7 +494,7 @@ function sudo(name) {
   if (name == "DM") {
     user.uid = "78OjG96RrtZi5J3vqUChlmIdL503";
   } else {
-    user.uid = players.find(p => p.name === name).uid;
+    user.uid = characters.find(p => p.name === name).uid;
   }
   rerender();
 }

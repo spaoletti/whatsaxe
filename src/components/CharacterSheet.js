@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useCollection } from "react-firebase-hooks/firestore";
 
 export default function CharacterSheet(props) {
 
-  const loading = 
-    <div>Loading</div>;
+  const query = props.firestore
+    .collection("characters")
+    .where("uid", "==", props.user.uid);
+  const [sheet, loading] = useCollection(query);
 
-  const noCharacter =
-    <div>You haven't created a character yet!</div>;
-
-  const character = (stats) => 
-    <div className="charSheet">
+  if (loading) {
+    return <div>Loading</div>;
+  } else if (sheet.empty) {
+    return <div>You haven't created a character yet!</div>;
+  } else {
+    const stats = sheet.docs[0].data();
+    return <div className="charSheet">
       <div>
         <div>Name</div><div>{stats.name}</div>
       </div>
@@ -31,18 +35,9 @@ export default function CharacterSheet(props) {
         <div>Charisma</div><div>{stats.cha}</div>
       </div>
       <div>
-        <div>Hit points</div><div>{stats.hp}</div>
+        <div>Hit points</div><div>{stats.hp} / {stats.maxhp}</div>
       </div>
-    </div>
+    </div>;  
+  }
 
-  const [sheet, setSheet] = useState(loading);
-
-  sheet === loading && props.firestore
-    .collection("characters")
-    .where("uid", "==", props.user.uid)
-    .get().then((r) => 
-      setSheet(r.empty ? noCharacter : character(r.docs[0].data()))
-    );
-
-  return sheet;
 }
