@@ -412,7 +412,18 @@ describe("Commands", () => {
       expect(messages.length).toBe(1);
       expect(mockedFirestore[0].data().type).toBe("chat");
       expect(mockedFirestore[0].data().private).toBe(true);
-      expect(mockedFirestore[0].data().text).toBe("!!! Wrong number of arguments. Correct syntax: /hit <player_name> <roll> !!!");
+      expect(mockedFirestore[0].data().text).toBe("!!! Wrong number of arguments. Correct syntax: /hit <player_name> <hp> !!!");
+    });
+
+    test("A hit command should have a numerical hit points argument", async () => {
+      sudo("DM");
+      await sendAction("/hit player1 xx");
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(mockedFirestore[0].data().type).toBe("chat");
+      expect(mockedFirestore[0].data().private).toBe(true);
+      expect(mockedFirestore[0].data().text).toBe("!!! Hit Points must be a number. Provided: xx !!!");
     });
 
   });

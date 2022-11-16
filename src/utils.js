@@ -105,7 +105,7 @@ function buildSkillCheckMessage(command, characters, user, messages) {
   const character = getCharacterByName(characters, command.args[0]);
   validateCharacter(character, command.args[0]);
   validateStat(command.args[1]);
-  validateDC(command.args[2]);
+  validateNumber(command.args[2], "DC");
   const lastRollRequest = getLastRollRequest(messages, character);
   validate(
     lastRollRequest && lastRollRequest.target === character.uid && !lastRollRequest.resolved,
@@ -121,9 +121,10 @@ function buildSkillCheckMessage(command, characters, user, messages) {
 }
 
 function buildHitMessage(command, characters) {
-  validateSyntax(command, 2, "/hit <player_name> <roll>");
+  validateSyntax(command, 2, "/hit <player_name> <hp>");
   const character = getCharacterByName(characters, command.args[0]);
   validateCharacter(character, command.args[0]);
+  validateNumber(command.args[1], "Hit Points");
 }
 
 // --------------------------------------- commands validation ---------------------------------------
@@ -149,17 +150,17 @@ function validateCharacter(existingCharacter, calledCharacter) {
   );
 }
 
+function validateNumber(n, desc) {
+  validate(
+    isNaN(n),
+    `${desc} must be a number. Provided: ${n}`
+  );
+}
+
 function validateStat(calledStat) {
   validate(
     !stats.includes(calledStat.toLowerCase()),
     `Unknown stat: ${calledStat}`
-  );
-}
-
-function validateDC(dc) {
-  validate(
-    isNaN(dc),
-    `DC must be a number. Provided: ${dc}`
   );
 }
 
