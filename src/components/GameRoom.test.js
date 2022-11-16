@@ -68,7 +68,8 @@ const players = [
     con: 6,
     int: 24,
     wis: 12,
-    cha: 10
+    cha: 10,
+    hp: 15
   }, 
   { name: "player2", uid: "def" },
   { name: "player3", uid: "ghi" },
@@ -424,6 +425,21 @@ describe("Commands", () => {
       expect(mockedFirestore[0].data().type).toBe("chat");
       expect(mockedFirestore[0].data().private).toBe(true);
       expect(mockedFirestore[0].data().text).toBe("!!! Hit Points must be a number. Provided: xx !!!");
+    });
+
+    test("A DM should be able to hit a player", async () => {
+      sudo("DM");
+      await sendAction("/hit player1 6");
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(mockedFirestore[0].data().type).toBe("chat");
+      expect(mockedFirestore[0].data().text).toBe("PLAYER1, you lost 6 hit points!");
+      expect(mockedFirestore[0].data().target).toBe("abc");
+      expect(mockedFirestore[0].data().command).toEqual({
+        args: ["player1", "6"], 
+        name: "hit"
+      });
     });
 
   });

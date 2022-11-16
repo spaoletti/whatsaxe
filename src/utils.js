@@ -111,21 +111,34 @@ function buildSkillCheckMessage(command, characters, user, messages) {
     lastRollRequest && lastRollRequest.target === character.uid && !lastRollRequest.resolved,
     `${character.name} has a skill check pending`
   );
-  return {
-    text: `${character.name.toUpperCase()}, make a ${command.args[1].toUpperCase()} skill check! (DC ${command.args[2]})`,
-    photoURL: user.photoURL,
-    type: "chat",
-    target: character.uid,
-    command: command
-  }
+  return commandMessage(
+    `${character.name.toUpperCase()}, make a ${command.args[1].toUpperCase()} skill check! (DC ${command.args[2]})`,
+    command,
+    character,
+    user
+  );
 }
 
-function buildHitMessage(command, characters) {
+function buildHitMessage(command, characters, user) {
   validateSyntax(command, 2, "/hit <player_name> <hp>");
   const character = getCharacterByName(characters, command.args[0]);
   validateCharacter(character, command.args[0]);
   validateNumber(command.args[1], "Hit Points");
+  return commandMessage(
+    `${character.name.toUpperCase()}, you lost ${command.args[1]} hit points!`,
+    command,
+    character,
+    user
+  );
 }
+
+const commandMessage = (text, command, character, user) => ({
+  text,
+  photoURL: user.photoURL,
+  type: "chat",
+  target: character.uid,
+  command: command
+})
 
 // --------------------------------------- commands validation ---------------------------------------
 
