@@ -6,7 +6,7 @@ import 'firebase/compat/auth';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import SignIn from './components/SignIn';
 import GameRoom from './components/GameRoom';
-import { buildCharacters, isDM, isPlayer } from './utils';
+import { isDM, isPlayer } from './utils';
 import { slide as Menu } from 'react-burger-menu'
 import CharacterSheet from './components/CharacterSheet';
 import PlayersList from './components/PlayersList';
@@ -36,14 +36,6 @@ function App() {
     firestore.collection("users").doc(user.uid).set(document);
   }  
 
-  function loadCharacterList() {
-    firestore
-      .collection("characters")
-      .get().then(r => 
-        setCharactersList(r.empty ? [] : buildCharacters(r.docs.map(d => d.data())))
-      );
-  }
-
   function handleMenuClick(page) {
     setPage(page);
     setIsMenuOpen(false);
@@ -52,12 +44,10 @@ function App() {
   const [user] = useAuthState(auth);
   const [page, setPage] = useState();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [charactersList, setCharactersList] = useState();
 
   useEffect(() => {
     if (user) {
       storeUser(user);
-      loadCharacterList();
       setPage("gameRoom");
     } else {
       setPage("signIn");
@@ -74,7 +64,6 @@ function App() {
           firebase={firebase} 
           firestore={firestore} 
           user={user}
-          characters={charactersList} 
         />;
       case "characterSheet":
         return <CharacterSheet
