@@ -10,7 +10,38 @@ jest.mock('react-firebase-hooks/firestore', () => ({
   useCollection: jest.fn()
 }));
 
-let mockedFirestore = []
+let messagesSnapshot = []
+let charactersSnapshot = [
+  {
+    data: () => ({
+      name: "player1",
+      uid: "abc",
+      str: 18,
+      dex: 8,
+      con: 6,
+      int: 24,
+      wis: 12,
+      cha: 10,
+      hp: 15,
+      maxhp: 15
+    })
+  },
+  {
+    data: () => (
+      { name: "player2", uid: "def" }
+    )
+  },
+  {
+    data: () => (
+      { name: "player3", uid: "def" }
+    )
+  },
+  {
+    data: () => (
+      { name: "player4", uid: "def" }
+    )
+  },
+]
 
 window.HTMLElement.prototype.scrollIntoView = function() {};
 
@@ -23,9 +54,12 @@ const firebase = {
 }
 
 const firestore = {
-  collection: () => ({
+  collection: (collectionName) => ({
+    _collectionName: collectionName,
     orderBy: () => ({
-      limit: () => ({})
+      limit: () => ({
+        _collectionName: collectionName
+      })
     }),
     add: (doc) => {
       addMessage(doc);
@@ -33,11 +67,11 @@ const firestore = {
     },
     where: () => ({
       get: () => {
-        const objectsToDelete = mockedFirestore.filter(doc => doc.data().type === "chat");
+        const objectsToDelete = messagesSnapshot.filter(doc => doc.data().type === "chat");
         for (const objToDelete of objectsToDelete) {
           objToDelete.ref = {
             delete: () => {
-              mockedFirestore = mockedFirestore.filter(doc => doc !== objToDelete);
+              messagesSnapshot = messagesSnapshot.filter(doc => doc !== objToDelete);
             }
           }
         }
@@ -46,7 +80,7 @@ const firestore = {
     }),
     doc: (id) => ({
       update: () => {
-        const doc = mockedFirestore.find(d => d.id === id);
+        const doc = messagesSnapshot.find(d => d.id === id);
         const data = doc.data();
         data.resolved = true;
         doc.data = () => data
@@ -58,24 +92,6 @@ const firestore = {
 const user = {
   uid: ""
 };
-
-const characters = utils.buildCharacters([
-  { 
-    name: "player1", 
-    uid: "abc",
-    str: 18,
-    dex: 8,
-    con: 6,
-    int: 24,
-    wis: 12,
-    cha: 10,
-    hp: 15,
-    maxhp: 15
-  }, 
-  { name: "player2", uid: "def" },
-  { name: "player3", uid: "ghi" },
-  { name: "player4", uid: "jkl" }
-]);
 
 beforeEach(() => {
   clearFirestore();
@@ -105,7 +121,7 @@ describe("Basic game loop", () => {
   
     let messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(1);
-    expect(mockedFirestore[0].data().type).toBe("chat");
+    expect(messagesSnapshot[0].data().type).toBe("chat");
   });
   
   test('if there are no messages the DM should be able to declare an Action', async () => {
@@ -114,7 +130,7 @@ describe("Basic game loop", () => {
   
     let messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(1);
-    expect(mockedFirestore[0].data().type).toBe("action");
+    expect(messagesSnapshot[0].data().type).toBe("action");
   });
   
   test('if there are no messages the player should NOT be able to declare an Action', async () => {
@@ -138,8 +154,8 @@ describe("Basic game loop", () => {
   
     const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(2);
-    expect(mockedFirestore[0].data().type).toBe("action");
-    expect(mockedFirestore[1].data().type).toBe("action");
+    expect(messagesSnapshot[0].data().type).toBe("action");
+    expect(messagesSnapshot[1].data().type).toBe("action");
   });
   
   test("A player should NOT be able to declare an Action without a previous Action from the DM", async () => {
@@ -152,8 +168,8 @@ describe("Basic game loop", () => {
   
     const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(2);
-    expect(mockedFirestore[0].data().type).toBe("chat");
-    expect(mockedFirestore[1].data().type).toBe("chat");
+    expect(messagesSnapshot[0].data().type).toBe("chat");
+    expect(messagesSnapshot[1].data().type).toBe("chat");
   });
   
   test("A player should be able to declare an Action after an Action from the DM", async () => {
@@ -164,8 +180,8 @@ describe("Basic game loop", () => {
   
     const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(2);
-    expect(mockedFirestore[0].data().type).toBe("action");
-    expect(mockedFirestore[1].data().type).toBe("action");
+    expect(messagesSnapshot[0].data().type).toBe("action");
+    expect(messagesSnapshot[1].data().type).toBe("action");
   });
   
   test("A player should NOT be able to declare an Action after another player's Action", async () => {
@@ -178,9 +194,9 @@ describe("Basic game loop", () => {
   
     const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(2);
-    expect(mockedFirestore[0].data().type).toBe("action");
-    expect(mockedFirestore[1].data().type).toBe("action");
-    expect(mockedFirestore[1].data().text).toBe("Action!");
+    expect(messagesSnapshot[0].data().type).toBe("action");
+    expect(messagesSnapshot[1].data().type).toBe("action");
+    expect(messagesSnapshot[1].data().text).toBe("Action!");
   });
 
   test("Private messages should be visible only by the receiver", async () => {
@@ -189,8 +205,8 @@ describe("Basic game loop", () => {
 
     let messages = screen.queryAllByTestId("message");    
     expect(messages.length).toBe(1);
-    expect(mockedFirestore[0].data().type).toBe("chat");
-    expect(mockedFirestore[0].data().text).toBe("!!! Unknown command: randomstuff !!!");
+    expect(messagesSnapshot[0].data().type).toBe("chat");
+    expect(messagesSnapshot[0].data().text).toBe("!!! Unknown command: randomstuff !!!");
 
     sudo("player1");
 
@@ -208,9 +224,9 @@ describe("Commands", () => {
   
     const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(1);
-    expect(mockedFirestore[0].data().type).toBe("chat");
-    expect(mockedFirestore[0].data().private).toBe(true);
-    expect(mockedFirestore[0].data().text).toBe("!!! Unknown command: someWrongCommand !!!");
+    expect(messagesSnapshot[0].data().type).toBe("chat");
+    expect(messagesSnapshot[0].data().private).toBe(true);
+    expect(messagesSnapshot[0].data().text).toBe("!!! Unknown command: someWrongCommand !!!");
   });
   
   test("A wrong command from the DM should not delete chats", async () => {
@@ -231,8 +247,8 @@ describe("Commands", () => {
   
     const messages = screen.queryAllByTestId("message");
     expect(messages.length).toBe(2);
-    expect(mockedFirestore[1].data().type).toBe("action");
-    expect(mockedFirestore[1].data().text).toBe("/someCommand");
+    expect(messagesSnapshot[1].data().type).toBe("action");
+    expect(messagesSnapshot[1].data().text).toBe("/someCommand");
   });
 
   describe("/skillcheck", () => {
@@ -243,9 +259,9 @@ describe("Commands", () => {
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
-      expect(mockedFirestore[0].data().type).toBe("chat");
-      expect(mockedFirestore[0].data().private).toBe(true);
-      expect(mockedFirestore[0].data().text).toBe("!!! Unknown player: nonexisting !!!");
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe("!!! Unknown player: nonexisting !!!");
     });
     
     test("When a DM asks a player to make a skill check on a wrong stat, he should receive an error message", async () => {
@@ -254,9 +270,9 @@ describe("Commands", () => {
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
-      expect(mockedFirestore[0].data().type).toBe("chat");
-      expect(mockedFirestore[0].data().private).toBe(true);
-      expect(mockedFirestore[0].data().text).toBe("!!! Unknown stat: xxx !!!");
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe("!!! Unknown stat: xxx !!!");
     });
     
     test("When a DM asks a player to make a skill check on a DC that's not a number, he should receive an error message", async () => {
@@ -265,9 +281,9 @@ describe("Commands", () => {
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
-      expect(mockedFirestore[0].data().type).toBe("chat");
-      expect(mockedFirestore[0].data().private).toBe(true);
-      expect(mockedFirestore[0].data().text).toBe("!!! DC must be a number. Provided: xx !!!");
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe("!!! DC must be a number. Provided: xx !!!");
     });
     
     test("A skill check command should have 3 arguments, or it throws an error message", async () => {
@@ -276,9 +292,9 @@ describe("Commands", () => {
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
-      expect(mockedFirestore[0].data().type).toBe("chat");
-      expect(mockedFirestore[0].data().private).toBe(true);
-      expect(mockedFirestore[0].data().text).toBe("!!! Wrong number of arguments. Correct syntax: /skillcheck <player_name> <stat> <DC> !!!");
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe("!!! Wrong number of arguments. Correct syntax: /skillcheck <player_name> <stat> <DC> !!!");
     });
     
     test("A DM should be able to ask for a skill check", async () => {
@@ -287,10 +303,10 @@ describe("Commands", () => {
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
-      expect(mockedFirestore[0].data().type).toBe("chat");
-      expect(mockedFirestore[0].data().text).toBe("PLAYER1, make a STR skill check! (DC 20)");
-      expect(mockedFirestore[0].data().target).toBe("abc");
-      expect(mockedFirestore[0].data().command).toEqual({
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().text).toBe("PLAYER1, make a STR skill check! (DC 20)");
+      expect(messagesSnapshot[0].data().target).toBe("abc");
+      expect(messagesSnapshot[0].data().command).toEqual({
         args: ["player1", "str", "20"], 
         name: "skillcheck"
       });
@@ -321,9 +337,9 @@ describe("Commands", () => {
 
       const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
-      expect(mockedFirestore[1].data().type).toBe("chat");
-      expect(mockedFirestore[1].data().private).toBe(true);
-      expect(mockedFirestore[1].data().text).toBe("!!! player1 has a skill check pending !!!");
+      expect(messagesSnapshot[1].data().type).toBe("chat");
+      expect(messagesSnapshot[1].data().private).toBe(true);
+      expect(messagesSnapshot[1].data().text).toBe("!!! player1 has a skill check pending !!!");
     });
 
     test("If there is a skill check pending, the DM should be able to ask another one to another player", async () => {
@@ -333,9 +349,9 @@ describe("Commands", () => {
 
       const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
-      expect(mockedFirestore[1].data().type).toBe("chat");
-      expect(mockedFirestore[1].data().text).toBe("PLAYER2, make a DEX skill check! (DC 20)");
-      expect(mockedFirestore[1].data().target).toBe("def");
+      expect(messagesSnapshot[1].data().type).toBe("chat");
+      expect(messagesSnapshot[1].data().text).toBe("PLAYER2, make a DEX skill check! (DC 20)");
+      expect(messagesSnapshot[1].data().target).toBe("def");
     });
 
     test.each([
@@ -349,8 +365,8 @@ describe("Commands", () => {
       
       const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
-      expect(mockedFirestore[1].data().type).toBe("chat");
-      expect(mockedFirestore[1].data().text).toBe(
+      expect(messagesSnapshot[1].data().type).toBe("chat");
+      expect(messagesSnapshot[1].data().text).toBe(
         `PLAYER1 rolled a ${die}!\n` +
         `${die} + 4 = ${die + 4}\n` +
         `It's a ${outcome}!`
@@ -365,7 +381,7 @@ describe("Commands", () => {
 
       const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
-      expect(mockedFirestore[0].data().resolved).toBe(true);
+      expect(messagesSnapshot[0].data().resolved).toBe(true);
     });
 
     test("The player should not see the roll button if the last skill check is resolved", async () => {
@@ -387,8 +403,8 @@ describe("Commands", () => {
 
       const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(3);
-      expect(mockedFirestore[2].data().type).toBe("chat");
-      expect(mockedFirestore[2].data().text).toBe("PLAYER1, make a STR skill check! (DC 20)");
+      expect(messagesSnapshot[2].data().type).toBe("chat");
+      expect(messagesSnapshot[2].data().text).toBe("PLAYER1, make a STR skill check! (DC 20)");
     });
 
   });  
@@ -401,9 +417,9 @@ describe("Commands", () => {
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
-      expect(mockedFirestore[0].data().type).toBe("chat");
-      expect(mockedFirestore[0].data().private).toBe(true);
-      expect(mockedFirestore[0].data().text).toBe("!!! Unknown player: nonexisting !!!");
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe("!!! Unknown player: nonexisting !!!");
     });
 
     test("A hit command should have 2 arguments, or it throws an error message", async () => {
@@ -412,9 +428,9 @@ describe("Commands", () => {
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
-      expect(mockedFirestore[0].data().type).toBe("chat");
-      expect(mockedFirestore[0].data().private).toBe(true);
-      expect(mockedFirestore[0].data().text).toBe("!!! Wrong number of arguments. Correct syntax: /hit <player_name> <hp> !!!");
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe("!!! Wrong number of arguments. Correct syntax: /hit <player_name> <hp> !!!");
     });
 
     test("A hit command should have a numerical hit points argument", async () => {
@@ -423,9 +439,9 @@ describe("Commands", () => {
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
-      expect(mockedFirestore[0].data().type).toBe("chat");
-      expect(mockedFirestore[0].data().private).toBe(true);
-      expect(mockedFirestore[0].data().text).toBe("!!! Hit Points must be a number. Provided: xx !!!");
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe("!!! Hit Points must be a number. Provided: xx !!!");
     });
 
     test("A DM should be able to hit a player", async () => {
@@ -434,10 +450,10 @@ describe("Commands", () => {
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
-      expect(mockedFirestore[0].data().type).toBe("chat");
-      expect(mockedFirestore[0].data().text).toBe("PLAYER1, you lost 6 hit points!");
-      expect(mockedFirestore[0].data().target).toBe("abc");
-      expect(mockedFirestore[0].data().command).toEqual({
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().text).toBe("PLAYER1, you lost 6 hit points!");
+      expect(messagesSnapshot[0].data().target).toBe("abc");
+      expect(messagesSnapshot[0].data().command).toEqual({
         args: ["player1", "6"], 
         name: "hit"
       });
@@ -448,8 +464,8 @@ describe("Commands", () => {
       await sendAction("/hit player1 6");
       sudo("player1");
 
-      const character = characters.find(p => p.name === "player1");
-      expect(character.hp).toBe(9);
+      const character = charactersSnapshot.find(p => p.data().name === "player1");
+      expect(character.data().hp).toBe(9);
       character.hp = character.maxhp;
     });
 
@@ -464,18 +480,17 @@ const rerender = () => {
       firebase={firebase} 
       firestore={firestore} 
       user={user}
-      characters={characters}
     />
   )
 };
 
 function clearFirestore() {
-  mockedFirestore = [];
+  messagesSnapshot = [];
   updateUseCollectionMock();
 }
 
 function addMessage(message) {
-  mockedFirestore.push({
+  messagesSnapshot.push({
     id: Date.now(),
     data: () => ({
       ...message
@@ -485,8 +500,8 @@ function addMessage(message) {
 }
 
 function updateUseCollectionMock() {
-  useCollection.mockImplementation(() => [{
-    docs: mockedFirestore
+  useCollection.mockImplementation((query) => [{
+    docs: query._collectionName === "messages" ? messagesSnapshot : charactersSnapshot
   }]);
 }
 
@@ -494,7 +509,7 @@ function sudo(name) {
   if (name == "DM") {
     user.uid = "78OjG96RrtZi5J3vqUChlmIdL503";
   } else {
-    user.uid = characters.find(p => p.name === name).uid;
+    user.uid = charactersSnapshot.find(p => p.data().name === name).data().uid;
   }
   rerender();
 }
