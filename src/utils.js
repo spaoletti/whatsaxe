@@ -62,7 +62,7 @@ function getCharacterByName(characters, name) {
 }
 
 export function getCharacterByUid(characters, uid) {
-  return characters.find(c => c.uid == uid);
+  return characters.find(c => c.uid === uid);
 }
 
 // --------------------------------------- commands ---------------------------------------
