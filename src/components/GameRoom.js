@@ -1,23 +1,29 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { buildCharacters, buildMessage, d20, getLastAction, getLastRollRequest, isFromTheDM, isPlayer } from "../utils";
+import { buildCharacters, buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
   const bottom = useRef();
+
   const messagesRef = props.firestore.collection("messages");
   const messagesQuery = messagesRef.orderBy("createdAt").limit(100);
   const [messagesSnapshot] = useCollection(messagesQuery);
-  const messages = messagesSnapshot && messagesSnapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-  const charactersQuery = props.firestore.collection("characters");
-  const [charactersSnapshot] = useCollection(charactersQuery);
+  const messages = 
+    messagesSnapshot && 
+    messagesSnapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+
+  const lastAction = getLastAction(messages);
+  const lastRequest = getLastRequest(messages, props.user);
+
+  const charactersRef = props.firestore.collection("characters");
+  const [charactersSnapshot] = useCollection(charactersRef);
   const characters = 
     charactersSnapshot && 
-    buildCharacters(charactersSnapshot.docs.map(d => d.data()));
+    buildCharacters(charactersSnapshot.docs.map(d => ({ ...d.data(), id: d.id })));
+
   const [inputText, setInputText] = useState("");
-  const inputIsEmpty = inputText.trim().length === 0;
-  const lastAction = getLastAction(messages);
-  const rollRequest = getLastRollRequest(messages, props.user);
+  const inputIsEmpty = inputText.trim().length === 0;  
 
   const deleteChats = (messagesRef) => {
     messagesRef
@@ -46,8 +52,12 @@ export default function GameRoom(props) {
     })
   }
 
-  const resolveRollRequest = (rollRequest) => {
-    messagesRef.doc(rollRequest.id).update({ resolved: true });    
+  const resolveRequest = (request) => {
+    messagesRef.doc(request.id).update({ resolved: true });    
+  }
+
+  const updateCharacterHp = (docId, newHp) => {
+    charactersRef.doc(docId).update({ hp: newHp });    
   }
 
   function roll(rollRequest) {
@@ -62,7 +72,7 @@ export default function GameRoom(props) {
       `${pc.name.toUpperCase()} rolled a ${die}!\n` +
       `${die} + ${modifier} = ${result}\n` +
       `It's a ${outcome}!`
-    resolveRollRequest(rollRequest);
+    resolveRequest(rollRequest);
     sendMessage("chat", message);
   }
 
@@ -84,6 +94,13 @@ export default function GameRoom(props) {
     bottom.current.scrollIntoView();
   });
 
+  if (lastRequest && lastRequest.command.name === "hit" && !lastRequest.resolved) {
+    const character = getCharacterByUid(characters, props.user.uid);
+    const newHp = character.hp - lastRequest.command.args[1];
+    updateCharacterHp(character.id, newHp);
+    resolveRequest(lastRequest);
+  }
+
   return (
     <>
       <main>
@@ -96,10 +113,10 @@ export default function GameRoom(props) {
         <div ref={bottom}></div>
       </main>
       <form onKeyDown={handleKeyDown}>
-        {rollRequest && !rollRequest.resolved &&
+        {lastRequest && lastRequest.command.name === "skillcheck" && !lastRequest.resolved &&
           <button
             disabled={!characters} 
-            onClick={(e) => roll(rollRequest)} 
+            onClick={(e) => roll(lastRequest)} 
             data-testid="roll" 
             type="button"
           >

@@ -11,37 +11,7 @@ jest.mock('react-firebase-hooks/firestore', () => ({
 }));
 
 let messagesSnapshot = []
-let charactersSnapshot = [
-  {
-    data: () => ({
-      name: "player1",
-      uid: "abc",
-      str: 18,
-      dex: 8,
-      con: 6,
-      int: 24,
-      wis: 12,
-      cha: 10,
-      hp: 15,
-      maxhp: 15
-    })
-  },
-  {
-    data: () => (
-      { name: "player2", uid: "def" }
-    )
-  },
-  {
-    data: () => (
-      { name: "player3", uid: "def" }
-    )
-  },
-  {
-    data: () => (
-      { name: "player4", uid: "def" }
-    )
-  },
-]
+let charactersSnapshot = []
 
 window.HTMLElement.prototype.scrollIntoView = function() {};
 
@@ -54,6 +24,7 @@ const firebase = {
 }
 
 const firestore = {
+
   collection: (collectionName) => ({
     _collectionName: collectionName,
     orderBy: () => ({
@@ -79,11 +50,11 @@ const firestore = {
       }
     }),
     doc: (id) => ({
-      update: () => {
-        const doc = messagesSnapshot.find(d => d.id === id);
-        const data = doc.data();
-        data.resolved = true;
-        doc.data = () => data
+      update: (propsToUpdate) => {
+        const snapshot = (collectionName === "messages") ? messagesSnapshot : charactersSnapshot;
+        const doc = snapshot.find(d => d.id === id);
+        const data = { ...doc.data(), ...propsToUpdate }; 
+        doc.data = () => data;
       }
     })
   })
@@ -94,7 +65,7 @@ const user = {
 };
 
 beforeEach(() => {
-  clearFirestore();
+  initFirestore();  
   rerender();
 });
 
@@ -459,6 +430,14 @@ describe("Commands", () => {
       });
     });
 
+    test("The player should not see the roll button if the last request is a hit command", async () => {
+      sudo("DM");
+      await sendAction("/hit player1 5");
+      sudo("player1");
+
+      expect(screen.queryByTestId("roll")).toBeNull();      
+    });
+
     test("A player targeted with a hit command should lose hit points", async () => {
       sudo("DM");
       await sendAction("/hit player1 6");
@@ -484,8 +463,39 @@ const rerender = () => {
   )
 };
 
-function clearFirestore() {
+function initFirestore() {
   messagesSnapshot = [];
+  charactersSnapshot = [
+    {
+      data: () => ({
+        name: "player1",
+        uid: "abc",
+        str: 18,
+        dex: 8,
+        con: 6,
+        int: 24,
+        wis: 12,
+        cha: 10,
+        hp: 15,
+        maxhp: 15
+      })
+    },
+    {
+      data: () => (
+        { name: "player2", uid: "def" }
+      )
+    },
+    {
+      data: () => (
+        { name: "player3", uid: "def" }
+      )
+    },
+    {
+      data: () => (
+        { name: "player4", uid: "def" }
+      )
+    },
+  ]  
   updateUseCollectionMock();
 }
 

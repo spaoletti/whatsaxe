@@ -15,14 +15,14 @@ export function isFromTheDM(message) {
 // --------------------------------------- messages ---------------------------------------
 
 export function getLastAction(messages) {
-  return findLastMessage(messages, m => m.type === "action");
+  return findLastMessageThatMatchCriteria(messages, m => m.type === "action");
 }
 
-export function getLastRollRequest(messages, user) {
-  return findLastMessage(messages, m => m.target === user.uid);
+export function getLastRequest(messages, user) {
+  return findLastMessageThatMatchCriteria(messages, m => m.target === user.uid);
 }
 
-function findLastMessage(messages, condition) {
+function findLastMessageThatMatchCriteria(messages, condition) {
   if (!messages) {
     return null;
   }
@@ -59,6 +59,10 @@ function buildCharacter(doc) {
 
 function getCharacterByName(characters, name) {
   return characters.find(c => c.name.toLowerCase() === name.toLowerCase());
+}
+
+export function getCharacterByUid(characters, uid) {
+  return characters.find(c => c.uid == uid);
 }
 
 // --------------------------------------- commands ---------------------------------------
@@ -106,9 +110,9 @@ function buildSkillCheckMessage(command, characters, user, messages) {
   validateCharacter(character, command.args[0]);
   validateStat(command.args[1]);
   validateNumber(command.args[2], "DC");
-  const lastRollRequest = getLastRollRequest(messages, character);
+  const lastRequest = getLastRequest(messages, character);
   validate(
-    lastRollRequest && lastRollRequest.target === character.uid && !lastRollRequest.resolved,
+    lastRequest && lastRequest.target === character.uid && !lastRequest.resolved,
     `${character.name} has a skill check pending`
   );
   return commandMessage(
