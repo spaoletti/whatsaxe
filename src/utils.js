@@ -45,16 +45,9 @@ export function d20() {
 
 const stats = ["str", "dex", "con", "int", "wis", "cha"];
 
-export function buildCharacters(docs) {
-  return docs.map(d => buildCharacter(d));
-}
-
-function buildCharacter(doc) {
-  doc.modifier = function(stat) {
-    const statValue = this[stat];
-    return (statValue - 10) / 2;
-  }
-  return doc;  
+export function getStatModifier(character, stat) {
+  const statValue = character[stat];
+  return (statValue - 10) / 2;
 }
 
 function getCharacterByName(characters, name) {

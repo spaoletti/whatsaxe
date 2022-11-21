@@ -1,38 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { buildCharacters, buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, isFromTheDM, isPlayer } from "../utils";
+import { deleteChats, getSnaphotData, resolveRequest, saveMessage, updateCharacterHp } from "../repository";
+import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, getStatModifier, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
   const bottom = useRef();
 
   const messagesRef = props.firestore.collection("messages");
-  const messagesQuery = messagesRef.orderBy("createdAt").limit(100);
-  const [messagesSnapshot] = useCollection(messagesQuery);
-  const messages = 
-    messagesSnapshot && 
-    messagesSnapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-
-  const lastAction = getLastAction(messages);
-  const lastRequest = getLastRequest(messages, props.user);
+  const [messagesSnapshot] = useCollection(messagesRef.orderBy("createdAt").limit(100));
+  const messages = getSnaphotData(messagesSnapshot);
 
   const charactersRef = props.firestore.collection("characters");
   const [charactersSnapshot] = useCollection(charactersRef);
-  const characters = 
-    charactersSnapshot && 
-    buildCharacters(charactersSnapshot.docs.map(d => ({ ...d.data(), id: d.id })));
+  const characters = getSnaphotData(charactersSnapshot);
 
+  const lastAction = getLastAction(messages);
+  const lastRequest = getLastRequest(messages, props.user);
   const [inputText, setInputText] = useState("");
-  const inputIsEmpty = inputText.trim().length === 0;  
 
-  const deleteChats = (messagesRef) => {
-    messagesRef
-      .where('type','==',"chat")
-      .get().then((result) => 
-        result.forEach((doc) => doc.ref.delete())
-      );  
-  }
-  
+  const isInputEmpty = inputText.trim().length === 0;  
+  const isChatDisabled = isInputEmpty || inputText.charAt(0) === "/";  
+  const isActionDisabled = isInputEmpty || (isPlayer(props.user) && !isFromTheDM(lastAction));
+
   const sendMessage = (type, text) => {
     setInputText("");
     const message = buildMessage(
@@ -45,45 +35,34 @@ export default function GameRoom(props) {
     if (message.type === "action") {
       deleteChats(messagesRef);
     }
-    messagesRef.add({
-      ...message,
-      uid: props.user.uid,
-      createdAt: props.firebase.firestore.FieldValue.serverTimestamp()
-    })
-  }
-
-  const resolveRequest = (request) => {
-    messagesRef.doc(request.id).update({ resolved: true });    
-  }
-
-  const updateCharacterHp = (docId, newHp) => {
-    charactersRef.doc(docId).update({ hp: newHp });    
+    saveMessage(
+      messagesRef, 
+      message, 
+      props.user.uid, 
+      props.firebase.firestore.FieldValue.serverTimestamp()
+    );
   }
 
   function roll(rollRequest) {
     const die = d20();
     const stat = rollRequest.command.args[1];
     const dc = rollRequest.command.args[2];
-    const pc = characters.find(c => c.uid === props.user.uid);
-    const modifier = pc.modifier(stat);
+    const character = characters.find(c => c.uid === props.user.uid);
+    const modifier = getStatModifier(character, stat);
     const result = die + modifier;
     const outcome = (result >= dc) ? "success" : "failure";
     const message = 
-      `${pc.name.toUpperCase()} rolled a ${die}!\n` +
+      `${character.name.toUpperCase()} rolled a ${die}!\n` +
       `${die} + ${modifier} = ${result}\n` +
       `It's a ${outcome}!`
-    resolveRequest(rollRequest);
+    resolveRequest(messagesRef, rollRequest.id);
     sendMessage("chat", message);
   }
-
-  const isChatDisabled = () => inputIsEmpty || inputText.charAt(0) === "/";
-  
-  const isActionDisabled = () => inputIsEmpty || (isPlayer(props.user) && !isFromTheDM(lastAction));
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {      
       e.preventDefault();
-      if (isChatDisabled()) {
+      if (isChatDisabled) {
         return;
       }
       sendMessage("chat", inputText);
@@ -97,8 +76,8 @@ export default function GameRoom(props) {
   if (lastRequest && lastRequest.command.name === "hit" && !lastRequest.resolved) {
     const character = getCharacterByUid(characters, props.user.uid);
     const newHp = character.hp - lastRequest.command.args[1];
-    updateCharacterHp(character.id, newHp);
-    resolveRequest(lastRequest);
+    updateCharacterHp(charactersRef, character.id, newHp);
+    resolveRequest(messagesRef, lastRequest.id);
   }
 
   return (
@@ -129,7 +108,7 @@ export default function GameRoom(props) {
           onChange={(e) => setInputText(e.target.value)} 
         />
         <button 
-          disabled={!characters || isChatDisabled()}
+          disabled={!characters || isChatDisabled}
           onClick={() => sendMessage("chat", inputText)} 
           data-testid="send" 
           type="button"
@@ -137,7 +116,7 @@ export default function GameRoom(props) {
           Chat
         </button>
         <button 
-          disabled={!characters || isActionDisabled()} 
+          disabled={!characters || isActionDisabled} 
           onClick={() => sendMessage("action", inputText)} 
           data-testid="send-action" 
           type="button"
