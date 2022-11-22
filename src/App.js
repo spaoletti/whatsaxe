@@ -10,6 +10,7 @@ import { isDM, isPlayer } from './utils';
 import { slide as Menu } from 'react-burger-menu'
 import CharacterSheet from './components/CharacterSheet';
 import PlayersList from './components/PlayersList';
+import Spinner from './components/Spinner';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC6J82sRFdawN4miLvzcKKtAfSvG11k1t8",
@@ -41,7 +42,7 @@ function App() {
     setIsMenuOpen(false);
   }
 
-  const [user] = useAuthState(auth);
+  const [user, loading] = useAuthState(auth);
   const [page, setPage] = useState();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -55,8 +56,8 @@ function App() {
   }, [user]);
 
   function render(page) {
-    if (!user) {
-      return <SignIn auth={auth} />;
+    if (!user) {      
+      return loading ? <Spinner/> : <SignIn auth={auth} />;
     }
     switch (page) {
       case "gameRoom":
@@ -76,7 +77,7 @@ function App() {
           user={user}
         />;  
       default:
-        return <div>Loading</div>;
+        return <></>;
     }
   }
 
