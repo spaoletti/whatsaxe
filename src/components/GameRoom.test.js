@@ -310,7 +310,7 @@ describe("Commands", () => {
       expect(messages.length).toBe(2);
       expect(messagesSnapshot[1].data().type).toBe("chat");
       expect(messagesSnapshot[1].data().private).toBe(true);
-      expect(messagesSnapshot[1].data().text).toBe("!!! player1 has a skill check pending !!!");
+      expect(messagesSnapshot[1].data().text).toBe("!!! player1 has another request pending !!!");
     });
 
     test("If there is a skill check pending, the DM should be able to ask another one to another player", async () => {
@@ -448,6 +448,17 @@ describe("Commands", () => {
       character.hp = character.maxhp;
     });
 
+    test("The DM should not be able to hit a player if there is a skillcheck pending", async () => {
+      sudo("DM");
+      await sendAction("/skillcheck player1 str 20");
+      await sendAction("/hit player1 3");
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(2);
+      expect(messagesSnapshot[1].data().type).toBe("chat");
+      expect(messagesSnapshot[1].data().text).toBe("!!! player1 has another request pending !!!");
+    });
+  
   });
 
 });

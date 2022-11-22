@@ -18,12 +18,12 @@ export function saveMessage(messagesRef, message, uid, timestamp) {
   })  
 }
 
-export function resolveRequest(messagesRef, docId) {
-  update(messagesRef, docId, { resolved: true });
+export function resolveRequest(messagesRef, request) {
+  update(messagesRef, request.id, { resolved: true });
 }
 
-export function updateCharacterHp(charactersRef, docId, newHp) {
-  update(charactersRef, docId, { hp: newHp });
+export function updateCharacterHp(charactersRef, character, newHp) {
+  update(charactersRef, character.id, { hp: newHp });
 }
 
 function update(ref, id, propsToUpdate) {

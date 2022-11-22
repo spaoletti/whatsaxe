@@ -104,10 +104,7 @@ function buildSkillCheckMessage(command, characters, user, messages) {
   validateStat(command.args[1]);
   validateNumber(command.args[2], "DC");
   const lastRequest = getLastRequest(messages, character);
-  validate(
-    lastRequest && lastRequest.target === character.uid && !lastRequest.resolved,
-    `${character.name} has a skill check pending`
-  );
+  validateLastRequest(lastRequest, character);
   return commandMessage(
     `${character.name.toUpperCase()}, make a ${command.args[1].toUpperCase()} skill check! (DC ${command.args[2]})`,
     command,
@@ -116,11 +113,13 @@ function buildSkillCheckMessage(command, characters, user, messages) {
   );
 }
 
-function buildHitMessage(command, characters, user) {
+function buildHitMessage(command, characters, user, messages) {
   validateSyntax(command, 2, "/hit <player_name> <hp>");
   const character = getCharacterByName(characters, command.args[0]);
   validateCharacter(character, command.args[0]);
   validateNumber(command.args[1], "Hit Points");
+  const lastRequest = getLastRequest(messages, character);
+  validateLastRequest(lastRequest, character);
   return commandMessage(
     `${character.name.toUpperCase()}, you lost ${command.args[1]} hit points!`,
     command,
@@ -171,6 +170,13 @@ function validateStat(calledStat) {
   validate(
     !stats.includes(calledStat.toLowerCase()),
     `Unknown stat: ${calledStat}`
+  );
+}
+
+function validateLastRequest(lastRequest, character) {
+  validate(
+    lastRequest && lastRequest.target === character.uid && !lastRequest.resolved,
+    `${character.name} has another request pending`
   );
 }
 

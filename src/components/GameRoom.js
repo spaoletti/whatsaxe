@@ -6,6 +6,7 @@ import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
   const bottom = useRef();
+  const [inputText, setInputText] = useState("");
 
   const messagesRef = props.firestore.collection("messages");
   const [messagesSnapshot] = useCollection(messagesRef.orderBy("createdAt").limit(100));
@@ -17,11 +18,11 @@ export default function GameRoom(props) {
 
   const lastAction = getLastAction(messages);
   const lastRequest = getLastRequest(messages, props.user);
-  const [inputText, setInputText] = useState("");
 
   const isInputEmpty = inputText.trim().length === 0;  
   const isChatDisabled = isInputEmpty || inputText.charAt(0) === "/";  
   const isActionDisabled = isInputEmpty || (isPlayer(props.user) && !isFromTheDM(lastAction));
+  const isCharactersLoading = !characters;
 
   const sendMessage = (type, text) => {
     setInputText("");
@@ -55,7 +56,7 @@ export default function GameRoom(props) {
       `${character.name.toUpperCase()} rolled a ${die}!\n` +
       `${die} + ${modifier} = ${result}\n` +
       `It's a ${outcome}!`
-    resolveRequest(messagesRef, rollRequest.id);
+    resolveRequest(messagesRef, rollRequest);
     sendMessage("chat", message);
   }
 
@@ -76,8 +77,8 @@ export default function GameRoom(props) {
   if (lastRequest && lastRequest.command.name === "hit" && !lastRequest.resolved) {
     const character = getCharacterByUid(characters, props.user.uid);
     const newHp = character.hp - lastRequest.command.args[1];
-    updateCharacterHp(charactersRef, character.id, newHp);
-    resolveRequest(messagesRef, lastRequest.id);
+    updateCharacterHp(charactersRef, character, newHp);
+    resolveRequest(messagesRef, lastRequest);
   }
 
   return (
@@ -94,7 +95,7 @@ export default function GameRoom(props) {
       <form onKeyDown={handleKeyDown}>
         {lastRequest && lastRequest.command.name === "skillcheck" && !lastRequest.resolved &&
           <button
-            disabled={!characters} 
+            disabled={isCharactersLoading} 
             onClick={(e) => roll(lastRequest)} 
             data-testid="roll" 
             type="button"
@@ -108,7 +109,7 @@ export default function GameRoom(props) {
           onChange={(e) => setInputText(e.target.value)} 
         />
         <button 
-          disabled={!characters || isChatDisabled}
+          disabled={isChatDisabled}
           onClick={() => sendMessage("chat", inputText)} 
           data-testid="send" 
           type="button"
@@ -116,7 +117,7 @@ export default function GameRoom(props) {
           Chat
         </button>
         <button 
-          disabled={!characters || isActionDisabled} 
+          disabled={isCharactersLoading || isActionDisabled} 
           onClick={() => sendMessage("action", inputText)} 
           data-testid="send-action" 
           type="button"
