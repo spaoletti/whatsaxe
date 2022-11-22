@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { deleteChats, getSnaphotData, resolveRequest, saveMessage, updateCharacterHp } from "../repository";
-import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, getStatModifier, isFromTheDM, isPlayer } from "../utils";
+import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
@@ -49,7 +49,7 @@ export default function GameRoom(props) {
     const stat = rollRequest.command.args[1];
     const dc = rollRequest.command.args[2];
     const character = characters.find(c => c.uid === props.user.uid);
-    const modifier = getStatModifier(character, stat);
+    const modifier = getModifierForStat(character, stat);
     const result = die + modifier;
     const outcome = (result >= dc) ? "success" : "failure";
     const message = 

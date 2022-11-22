@@ -45,8 +45,12 @@ export function d20() {
 
 const stats = ["str", "dex", "con", "int", "wis", "cha"];
 
-export function getStatModifier(character, stat) {
-  const statValue = character[stat];
+export function getModifierForStat(character, statName) {
+  const statValue = character[statName];
+  return getModifier(statValue);
+}
+
+export function getModifier(statValue) {
   return (statValue - 10) / 2;
 }
 

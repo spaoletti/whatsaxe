@@ -292,19 +292,23 @@ touch it in most cases
   align-items: center;
 }
 
+.charSheet .space {
+  margin-bottom: 30px;
+}
+
 .charSheet>div {
   display: flex;
   flex-direction: row;
   background-color: white;
   justify-content: center;
-  font-size: x-large;
+  font-size: large;
   border-radius: 10px;
   margin-bottom: 5px;
 }
 
 .charSheet>div>div {
   width: 150px;
-  padding: 10px;
+  padding: 5px;
 }
 
 .charSheet>div>div:first-child {
@@ -315,4 +319,7 @@ touch it in most cases
   color: gray;
   font-weight: bolder;
 }
+
+
+
 /* ---------------------------------- /character sheet ---------------------------------- */

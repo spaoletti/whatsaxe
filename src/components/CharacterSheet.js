@@ -1,6 +1,16 @@
 import { useCollection } from "react-firebase-hooks/firestore";
+import { getModifier } from "../utils";
 
 export default function CharacterSheet(props) {
+
+  function formatModifier(n) {
+    return (n <= 0) ? `${n}` : `+${n}`;
+  }
+
+  function formatStat(s) {
+    const modifier = getModifier(s);
+    return `${s} (${formatModifier(modifier)})`;
+  }
 
   const query = props.firestore
     .collection("characters")
@@ -12,30 +22,39 @@ export default function CharacterSheet(props) {
   } else if (sheet.empty) {
     return <div>You haven't created a character yet!</div>;
   } else {
-    const stats = sheet.docs[0].data();
+    const character = sheet.docs[0].data();
     return <div className="charSheet">
       <div>
-        <div>Name</div><div>{stats.name}</div>
+        <div>Name</div><div>{character.name}</div>
       </div>
       <div>
-        <div>Strength</div><div>{stats.str}</div></div>
-      <div>
-        <div>Constitution</div><div>{stats.con}</div>
+        <div>Race</div><div>{character.race}</div>
       </div>
       <div>
-        <div>Dexterity</div><div>{stats.dex}</div>
+        <div>Class</div><div>{character.class}</div>
+      </div>
+      <div className="space"></div>
+      <div>
+        <div>Strength</div><div>{formatStat(character.str)}</div>
       </div>
       <div>
-        <div>Intelligence</div><div>{stats.int}</div>
+        <div>Constitution</div><div>{formatStat(character.con)}</div>
       </div>
       <div>
-        <div>Wisdom</div><div>{stats.wis}</div>
+        <div>Dexterity</div><div>{formatStat(character.dex)}</div>
       </div>
       <div>
-        <div>Charisma</div><div>{stats.cha}</div>
+        <div>Intelligence</div><div>{formatStat(character.int)}</div>
       </div>
       <div>
-        <div>Hit points</div><div>{stats.hp} / {stats.maxhp}</div>
+        <div>Wisdom</div><div>{formatStat(character.wis)}</div>
+      </div>
+      <div>
+        <div>Charisma</div><div>{formatStat(character.cha)}</div>
+      </div>
+      <div className="space"></div>
+      <div>
+        <div>Hit points</div><div>{character.hp} / {character.maxhp}</div>
       </div>
     </div>;  
   }
