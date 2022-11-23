@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { deleteChats, getSnaphotData, resolveRequest, saveMessage, updateCharacterHp } from "../repository";
-import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest as getLastRequestForAPlayer, getModifierForStat, isFromTheDM, isPlayer } from "../utils";
+import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest as getLastRequestForAPlayer, getModifierForStat, isDead, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
@@ -16,13 +16,14 @@ export default function GameRoom(props) {
   const [charactersSnapshot] = useCollection(charactersRef);
   const characters = getSnaphotData(charactersSnapshot);
 
-  const isCharactersLoading = !characters;
-  const playerCharacter = !isCharactersLoading && getCharacterByUid(characters, props.user.uid);
   const lastAction = getLastAction(messages);
   const lastRequestForMe = getLastRequestForAPlayer(messages, props.user);
+  const isCharactersLoading = !characters;
+  const playerCharacter = !isCharactersLoading && getCharacterByUid(characters, props.user.uid);
+  const isPlayerDead = !isCharactersLoading && isPlayer(props.user) && isDead(playerCharacter);
   const isInputEmpty = inputText.trim().length === 0;  
   const isChatDisabled = isInputEmpty || inputText.charAt(0) === "/";  
-  const isActionDisabled = isInputEmpty || (isPlayer(props.user) && !isFromTheDM(lastAction));
+  const isActionDisabled = isInputEmpty || isPlayerDead || (isPlayer(props.user) && !isFromTheDM(lastAction));
 
   const sendMessage = (type, text) => {
     setInputText("");

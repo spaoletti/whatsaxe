@@ -12,6 +12,7 @@ jest.mock('react-firebase-hooks/firestore', () => ({
 
 let messagesSnapshot = []
 let charactersSnapshot = []
+const dungeonMasterUid = "78OjG96RrtZi5J3vqUChlmIdL503";
 
 window.HTMLElement.prototype.scrollIntoView = function() {};
 
@@ -61,7 +62,7 @@ const firestore = {
 };
 
 const user = {
-  uid: ""
+  uid: dungeonMasterUid
 };
 
 beforeEach(() => {
@@ -201,8 +202,19 @@ describe("Death", () => {
     expect(messagesSnapshot[1].data().text).toBe("PLAYER1, you are dead.");
   });
 
-  // test("A dead player can't send Actions", async () => {
-  // });
+  test("A dead player can't send Actions", async () => {
+    await sudo("DM");
+    await sendAction("Boom, dragon");
+    await sendAction("/hit player1 30");
+    await sudo("player1");
+    await rerender();
+    await sendAction("I'm undead!");
+
+    const messages = screen.queryAllByTestId("message");
+    expect(messages.length).toBe(3);
+    expect(messagesSnapshot[2].data().type).toBe("chat");
+    expect(messagesSnapshot[2].data().text).toBe("PLAYER1, you are dead.");
+  });
 
   // test("The DM can't target a dead player", async () => {
   // });
@@ -550,7 +562,7 @@ function updateUseCollectionMock() {
 
 async function sudo(name) {
   if (name == "DM") {
-    user.uid = "78OjG96RrtZi5J3vqUChlmIdL503";
+    user.uid = dungeonMasterUid;
   } else {
     user.uid = charactersSnapshot.find(p => p.data().name === name).data().uid;
   }
