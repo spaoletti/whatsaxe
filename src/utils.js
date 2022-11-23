@@ -105,6 +105,10 @@ function isCommand(text, type, user) {
   return type === "action" && isDM(user) && text.charAt(0) === "/";
 }
 
+export function isRequestUnresolved(command, request) {
+  return request && request.command.name === command && !request.resolved;
+}
+
 function buildSkillCheckMessage(command, characters, user, messages) {
   validateSyntax(command, 3, "/skillcheck <player_name> <stat> <DC>");
   const character = getCharacterByName(characters, command.args[0]);

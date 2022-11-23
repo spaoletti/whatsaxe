@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { deleteChats, getSnaphotData, resolveRequest, saveMessage, updateCharacterHp } from "../repository";
-import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest as getLastRequestForAPlayer, getModifierForStat, isDead, isFromTheDM, isPlayer } from "../utils";
+import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isDead, isFromTheDM, isPlayer, isRequestUnresolved } from "../utils";
+
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
@@ -17,7 +18,7 @@ export default function GameRoom(props) {
   const characters = getSnaphotData(charactersSnapshot);
 
   const lastAction = getLastAction(messages);
-  const lastRequestForMe = getLastRequestForAPlayer(messages, props.user);
+  const lastRequestForMe = getLastRequest(messages, props.user);
   const isCharactersLoading = !characters;
   const playerCharacter = !isCharactersLoading && getCharacterByUid(characters, props.user.uid);
   const isPlayerDead = !isCharactersLoading && isPlayer(props.user) && isDead(playerCharacter);
@@ -85,7 +86,7 @@ export default function GameRoom(props) {
   });
 
   useEffect(() => {
-    if (lastRequestForMe && lastRequestForMe.command.name === "hit" && !lastRequestForMe.resolved) {
+    if (isRequestUnresolved("hit", lastRequestForMe)) {
       loseHp(lastRequestForMe);
     }
   // eslint-disable-next-line
@@ -103,7 +104,7 @@ export default function GameRoom(props) {
         <div ref={bottom}></div>
       </main>
       <form onKeyDown={handleKeyDown}>
-        {lastRequestForMe && lastRequestForMe.command.name === "skillcheck" && !lastRequestForMe.resolved &&
+        {isRequestUnresolved("skillcheck", lastRequestForMe) &&
           <button
             disabled={isCharactersLoading} 
             onClick={(e) => roll(lastRequestForMe)} 
