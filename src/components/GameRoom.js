@@ -90,7 +90,7 @@ export default function GameRoom(props) {
       loseHp(lastRequestForMe);
     }
   // eslint-disable-next-line
-  }, [messages]);
+  }, [lastRequestForMe]);
 
   return (
     <>

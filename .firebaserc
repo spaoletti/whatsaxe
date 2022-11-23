@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "whatsaxe-78703"
-  }
+    "default": "whatsaxe-78703",
+    "dev": "whatsaxe-dev"
+  },
+  "targets": {},
+  "etags": {}
 }
