@@ -216,8 +216,23 @@ describe("Death", () => {
     expect(messagesSnapshot[2].data().text).toBe("PLAYER1, you are dead.");
   });
 
-  // test("The DM can't target a dead player", async () => {
-  // });
+  test.each([
+    ["skillcheck", "player1 str 20"], 
+    ["hit", "player1 30"]
+  ])("The DM can't target a dead player with %p", async (command, args) => {
+    await sudo("DM");
+    await sendAction("/hit player1 30");
+    await sudo("player1");
+    await rerender();
+    await sudo("DM");
+    await sendAction(`/${command} ${args}`);
+
+    const messages = screen.queryAllByTestId("message");
+    expect(messages.length).toBe(3);
+    expect(messagesSnapshot[2].data().type).toBe("chat");
+    expect(messagesSnapshot[2].data().private).toBe(true);
+    expect(messagesSnapshot[2].data().text).toBe("!!! Invalid target: player1 !!!");
+  });
 
 });
 
@@ -266,7 +281,7 @@ describe("Commands", () => {
       expect(messages.length).toBe(1);
       expect(messagesSnapshot[0].data().type).toBe("chat");
       expect(messagesSnapshot[0].data().private).toBe(true);
-      expect(messagesSnapshot[0].data().text).toBe("!!! Unknown player: nonexisting !!!");
+      expect(messagesSnapshot[0].data().text).toBe("!!! Invalid target: nonexisting !!!");
     });
     
     test("When a DM asks a player to make a skill check on a wrong stat, he should receive an error message", async () => {
@@ -424,7 +439,7 @@ describe("Commands", () => {
       expect(messages.length).toBe(1);
       expect(messagesSnapshot[0].data().type).toBe("chat");
       expect(messagesSnapshot[0].data().private).toBe(true);
-      expect(messagesSnapshot[0].data().text).toBe("!!! Unknown player: nonexisting !!!");
+      expect(messagesSnapshot[0].data().text).toBe("!!! Invalid target: nonexisting !!!");
     });
 
     test("A hit command should have 2 arguments, or it throws an error message", async () => {

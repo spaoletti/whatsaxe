@@ -60,6 +60,16 @@ export default function GameRoom(props) {
     sendMessage("chat", message);
   }
 
+  function loseHp(hitRequest) {
+    const newHp = playerCharacter.hp - hitRequest.command.args[1];
+    updateCharacterHp(charactersRef, playerCharacter, newHp);    
+    resolveRequest(messagesRef, hitRequest).then(_ => {
+      if (newHp <= 0) {
+        sendMessage("chat", `${playerCharacter.name.toUpperCase()}, you are dead.`);
+      }      
+    });
+  }
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {      
       e.preventDefault();
@@ -76,13 +86,7 @@ export default function GameRoom(props) {
 
   useEffect(() => {
     if (lastRequestForMe && lastRequestForMe.command.name === "hit" && !lastRequestForMe.resolved) {
-      const newHp = playerCharacter.hp - lastRequestForMe.command.args[1];
-      updateCharacterHp(charactersRef, playerCharacter, newHp);    
-      resolveRequest(messagesRef, lastRequestForMe).then(_ => {
-        if (newHp <= 0) {
-          sendMessage("chat", `${playerCharacter.name.toUpperCase()}, you are dead.`);
-        }      
-      });
+      loseHp(lastRequestForMe);
     }
   // eslint-disable-next-line
   }, [messages]);

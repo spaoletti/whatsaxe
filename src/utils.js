@@ -108,7 +108,7 @@ function isCommand(text, type, user) {
 function buildSkillCheckMessage(command, characters, user, messages) {
   validateSyntax(command, 3, "/skillcheck <player_name> <stat> <DC>");
   const character = getCharacterByName(characters, command.args[0]);
-  validateCharacter(character, command.args[0]);
+  validateTarget(character, command.args[0]);
   validateStat(command.args[1]);
   validateNumber(command.args[2], "DC");
   const lastRequest = getLastRequest(messages, character);
@@ -124,7 +124,7 @@ function buildSkillCheckMessage(command, characters, user, messages) {
 function buildHitMessage(command, characters, user, messages) {
   validateSyntax(command, 2, "/hit <player_name> <hp>");
   const character = getCharacterByName(characters, command.args[0]);
-  validateCharacter(character, command.args[0]);
+  validateTarget(character, command.args[0]);
   validateNumber(command.args[1], "Hit Points");
   const lastRequest = getLastRequest(messages, character);
   validateLastRequest(lastRequest, character);
@@ -160,10 +160,10 @@ function validateSyntax(command, numberOfArguments, correctSyntax) {
   );
 }
 
-function validateCharacter(existingCharacter, calledCharacter) {
+function validateTarget(existingCharacter, calledCharacter) {
   validate(
-    !existingCharacter,
-    `Unknown player: ${calledCharacter}`
+    !existingCharacter || isDead(existingCharacter),
+    `Invalid target: ${calledCharacter}`
   );
 }
 
