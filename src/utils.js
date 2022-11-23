@@ -62,6 +62,10 @@ export function getCharacterByUid(characters, uid) {
   return characters.find(c => c.uid === uid);
 }
 
+export function isDead(character) {
+  return character.hp <= 0;
+}
+
 // --------------------------------------- commands ---------------------------------------
 
 const commands = {

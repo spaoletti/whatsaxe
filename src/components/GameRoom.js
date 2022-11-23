@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { deleteChats, getSnaphotData, resolveRequest, saveMessage, updateCharacterHp } from "../repository";
-import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isFromTheDM, isPlayer } from "../utils";
+import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest as getLastRequestForAPlayer, getModifierForStat, isFromTheDM, isPlayer } from "../utils";
 import ChatMessage from "./ChatMessage";
 
 export default function GameRoom(props) {
@@ -16,13 +16,13 @@ export default function GameRoom(props) {
   const [charactersSnapshot] = useCollection(charactersRef);
   const characters = getSnaphotData(charactersSnapshot);
 
+  const isCharactersLoading = !characters;
+  const playerCharacter = !isCharactersLoading && getCharacterByUid(characters, props.user.uid);
   const lastAction = getLastAction(messages);
-  const lastRequest = getLastRequest(messages, props.user);
-
+  const lastRequestForMe = getLastRequestForAPlayer(messages, props.user);
   const isInputEmpty = inputText.trim().length === 0;  
   const isChatDisabled = isInputEmpty || inputText.charAt(0) === "/";  
   const isActionDisabled = isInputEmpty || (isPlayer(props.user) && !isFromTheDM(lastAction));
-  const isCharactersLoading = !characters;
 
   const sendMessage = (type, text) => {
     setInputText("");
@@ -48,12 +48,11 @@ export default function GameRoom(props) {
     const die = d20();
     const stat = rollRequest.command.args[1];
     const dc = rollRequest.command.args[2];
-    const character = characters.find(c => c.uid === props.user.uid);
-    const modifier = getModifierForStat(character, stat);
+    const modifier = getModifierForStat(playerCharacter, stat);
     const result = die + modifier;
     const outcome = (result >= dc) ? "success" : "failure";
     const message = 
-      `${character.name.toUpperCase()} rolled a ${die}!\n` +
+      `${playerCharacter.name.toUpperCase()} rolled a ${die}!\n` +
       `${die} + ${modifier} = ${result}\n` +
       `It's a ${outcome}!`
     resolveRequest(messagesRef, rollRequest);
@@ -74,12 +73,18 @@ export default function GameRoom(props) {
     bottom.current.scrollIntoView();
   });
 
-  if (lastRequest && lastRequest.command.name === "hit" && !lastRequest.resolved) {
-    const character = getCharacterByUid(characters, props.user.uid);
-    const newHp = character.hp - lastRequest.command.args[1];
-    updateCharacterHp(charactersRef, character, newHp);
-    resolveRequest(messagesRef, lastRequest);
-  }
+  useEffect(() => {
+    if (lastRequestForMe && lastRequestForMe.command.name === "hit" && !lastRequestForMe.resolved) {
+      const newHp = playerCharacter.hp - lastRequestForMe.command.args[1];
+      updateCharacterHp(charactersRef, playerCharacter, newHp);    
+      resolveRequest(messagesRef, lastRequestForMe).then(_ => {
+        if (newHp <= 0) {
+          sendMessage("chat", `${playerCharacter.name.toUpperCase()}, you are dead.`);
+        }      
+      });
+    }
+  // eslint-disable-next-line
+  }, [messages]);
 
   return (
     <>
@@ -93,10 +98,10 @@ export default function GameRoom(props) {
         <div ref={bottom}></div>
       </main>
       <form onKeyDown={handleKeyDown}>
-        {lastRequest && lastRequest.command.name === "skillcheck" && !lastRequest.resolved &&
+        {lastRequestForMe && lastRequestForMe.command.name === "skillcheck" && !lastRequestForMe.resolved &&
           <button
             disabled={isCharactersLoading} 
-            onClick={(e) => roll(lastRequest)} 
+            onClick={(e) => roll(lastRequestForMe)} 
             data-testid="roll" 
             type="button"
           >

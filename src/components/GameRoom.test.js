@@ -75,7 +75,7 @@ describe("Basic game loop", () => {
     ["DM"], 
     ["player1"]
   ])("The %p can't send empty messages", async (player) => {
-    sudo(player);
+    await sudo(player);
     await sendChat(" ");
     await sendAction(" ");
 
@@ -87,7 +87,7 @@ describe("Basic game loop", () => {
     ["DM"], 
     ["player1"]
   ])('if there are no messages the %p should be able to write a Chat', async (player) => {
-    sudo(player);
+    await sudo(player);
     await sendChat("A message!");
   
     let messages = screen.queryAllByTestId("message");
@@ -96,7 +96,7 @@ describe("Basic game loop", () => {
   });
   
   test('if there are no messages the DM should be able to declare an Action', async () => {
-    sudo("DM");
+    await sudo("DM");
     await sendAction("An action!");
   
     let messages = screen.queryAllByTestId("message");
@@ -105,7 +105,7 @@ describe("Basic game loop", () => {
   });
   
   test('if there are no messages the player should NOT be able to declare an Action', async () => {
-    sudo("player1");
+    await sudo("player1");
     await sendAction("An action!");
   
     const messages = screen.queryAllByTestId("message")
@@ -116,9 +116,9 @@ describe("Basic game loop", () => {
     ["DM"], 
     ["player1"]
   ])('after an Action is sent by the %p, all Chats are deleted', async (player) => {
-    sudo("DM");
+    await sudo("DM");
     await sendAction("Incipit!");
-    sudo(player);
+    await sudo(player);
     await sendChat("Here's a message");
     await sendChat("Here's another");
     await sendAction("And an action");
@@ -130,11 +130,11 @@ describe("Basic game loop", () => {
   });
   
   test("A player should NOT be able to declare an Action without a previous Action from the DM", async () => {
-    sudo("player1");
+    await sudo("player1");
     await sendChat("Here's a message from player");
-    sudo("DM");
+    await sudo("DM");
     await sendChat("Here's a message from DM");
-    sudo("player1");
+    await sudo("player1");
     await sendAction("Here's an Action from the player");
   
     const messages = screen.queryAllByTestId("message");
@@ -144,9 +144,9 @@ describe("Basic game loop", () => {
   });
   
   test("A player should be able to declare an Action after an Action from the DM", async () => {
-    sudo("DM");
+    await sudo("DM");
     await sendAction("Incipit!");
-    sudo("player1");
+    await sudo("player1");
     await sendAction("Here's an Action from the player");
   
     const messages = screen.queryAllByTestId("message");
@@ -156,11 +156,11 @@ describe("Basic game loop", () => {
   });
   
   test("A player should NOT be able to declare an Action after another player's Action", async () => {
-    sudo("DM");
+    await sudo("DM");
     await sendAction("Incipit");
-    sudo("player1");
+    await sudo("player1");
     await sendAction("Action!");
-    sudo("player1");
+    await sudo("player1");
     await sendAction("Another action!");
   
     const messages = screen.queryAllByTestId("message");
@@ -171,7 +171,7 @@ describe("Basic game loop", () => {
   });
 
   test("Private messages should be visible only by the receiver", async () => {
-    sudo("DM");
+    await sudo("DM");
     await sendAction("/randomstuff");
 
     let messages = screen.queryAllByTestId("message");    
@@ -179,7 +179,7 @@ describe("Basic game loop", () => {
     expect(messagesSnapshot[0].data().type).toBe("chat");
     expect(messagesSnapshot[0].data().text).toBe("!!! Unknown command: randomstuff !!!");
 
-    sudo("player1");
+    await sudo("player1");
 
     messages = screen.queryAllByTestId("message");    
     expect(messages.length).toBe(0);
@@ -187,10 +187,32 @@ describe("Basic game loop", () => {
 
 });
 
+describe("Death", () => {
+
+  test("When a player loses all her hit points, she die", async () => {
+    await sudo("DM");
+    await sendAction("/hit player1 30");
+    await sudo("player1");
+    await rerender();
+
+    const messages = screen.queryAllByTestId("message");
+    expect(messages.length).toBe(2);
+    expect(messagesSnapshot[1].data().type).toBe("chat");
+    expect(messagesSnapshot[1].data().text).toBe("PLAYER1, you are dead.");
+  });
+
+  // test("A dead player can't send Actions", async () => {
+  // });
+
+  // test("The DM can't target a dead player", async () => {
+  // });
+
+});
+
 describe("Commands", () => {
 
   test("A DM should be able to send an unknown command and receive an error message", async () => {
-    sudo("DM");
+    await sudo("DM");
     await sendAction("/someWrongCommand");
   
     const messages = screen.queryAllByTestId("message");
@@ -201,7 +223,7 @@ describe("Commands", () => {
   });
   
   test("A wrong command from the DM should not delete chats", async () => {
-    sudo("DM");
+    await sudo("DM");
     await sendChat("A chat");
     await sendChat("Another chat");
     await sendAction("/someWrongCommand");
@@ -211,9 +233,9 @@ describe("Commands", () => {
   });
   
   test("A player should NOT be able to send commands", async () => {
-    sudo("DM");
+    await sudo("DM");
     await sendAction("Incipit!");
-    sudo("player1");
+    await sudo("player1");
     await sendAction("/someCommand");
   
     const messages = screen.queryAllByTestId("message");
@@ -225,7 +247,7 @@ describe("Commands", () => {
   describe("/skillcheck", () => {
 
     test("When a DM asks a non existing player to make a skill check, he should receive an error message", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck nonexisting str 20");
     
       const messages = screen.queryAllByTestId("message");
@@ -236,7 +258,7 @@ describe("Commands", () => {
     });
     
     test("When a DM asks a player to make a skill check on a wrong stat, he should receive an error message", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 xxx 20");
     
       const messages = screen.queryAllByTestId("message");
@@ -247,7 +269,7 @@ describe("Commands", () => {
     });
     
     test("When a DM asks a player to make a skill check on a DC that's not a number, he should receive an error message", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str xx");
     
       const messages = screen.queryAllByTestId("message");
@@ -258,7 +280,7 @@ describe("Commands", () => {
     });
     
     test("A skill check command should have 3 arguments, or it throws an error message", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck");
     
       const messages = screen.queryAllByTestId("message");
@@ -269,7 +291,7 @@ describe("Commands", () => {
     });
     
     test("A DM should be able to ask for a skill check", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
     
       const messages = screen.queryAllByTestId("message");
@@ -284,25 +306,25 @@ describe("Commands", () => {
     });
   
     test("A player asked for a skill check should be able to see the roll button", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
-      sudo("player1");      
+      await sudo("player1");      
 
       const rollButton = screen.queryByTestId("roll");
       expect(rollButton).toBeTruthy();
     });
 
     test("ONLY the player asked for a skill check should be able to see the roll button", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
-      sudo("player2");    
+      await sudo("player2");    
 
       const rollButton = screen.queryByTestId("roll");
       expect(rollButton).toBeFalsy();
     });
 
     test("If there is a skill check pending, the DM should NOT be able to ask another one to the same player", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
       await sendAction("/skillcheck player1 dex 20");
 
@@ -314,7 +336,7 @@ describe("Commands", () => {
     });
 
     test("If there is a skill check pending, the DM should be able to ask another one to another player", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
       await sendAction("/skillcheck player2 dex 20");
 
@@ -329,9 +351,9 @@ describe("Commands", () => {
       [19, "success"], 
       [2, "failure"]
     ])("A player should be able to roll a %p and make a %p skill check", async (die, outcome) => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
-      sudo("player1");
+      await sudo("player1");
       await roll(die);
       
       const messages = screen.queryAllByTestId("message");    
@@ -345,9 +367,9 @@ describe("Commands", () => {
     });
 
     test("Rolling the dice should resolve the pending skill check", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
-      sudo("player1");
+      await sudo("player1");
       await roll();
 
       const messages = screen.queryAllByTestId("message");    
@@ -356,20 +378,20 @@ describe("Commands", () => {
     });
 
     test("The player should not see the roll button if the last skill check is resolved", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
-      sudo("player1");
+      await sudo("player1");
       await roll();
 
       expect(screen.queryByTestId("roll")).toBeNull();
     });
 
     test("If there is a resolved skill check, the DM should be able to ask another one to the same player", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 dex 15");
-      sudo("player1");
+      await sudo("player1");
       await roll();
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
 
       const messages = screen.queryAllByTestId("message");    
@@ -383,7 +405,7 @@ describe("Commands", () => {
   describe("/hit", () => {
 
     test("When a DM hit a non existing player, he should receive an error message", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/hit nonexisting 1d8");
     
       const messages = screen.queryAllByTestId("message");
@@ -394,7 +416,7 @@ describe("Commands", () => {
     });
 
     test("A hit command should have 2 arguments, or it throws an error message", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/hit");
     
       const messages = screen.queryAllByTestId("message");
@@ -405,7 +427,7 @@ describe("Commands", () => {
     });
 
     test("A hit command should have a numerical hit points argument", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/hit player1 xx");
     
       const messages = screen.queryAllByTestId("message");
@@ -416,7 +438,7 @@ describe("Commands", () => {
     });
 
     test("A DM should be able to hit a player", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/hit player1 6");
     
       const messages = screen.queryAllByTestId("message");
@@ -431,17 +453,17 @@ describe("Commands", () => {
     });
 
     test("The player should not see the roll button if the last request is a hit command", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/hit player1 5");
-      sudo("player1");
+      await sudo("player1");
 
       expect(screen.queryByTestId("roll")).toBeNull();      
     });
 
     test("A player targeted with a hit command should lose hit points", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/hit player1 6");
-      sudo("player1");
+      await sudo("player1");
 
       const character = charactersSnapshot.find(p => p.data().name === "player1");
       expect(character.data().hp).toBe(9);
@@ -449,7 +471,7 @@ describe("Commands", () => {
     });
 
     test("The DM should not be able to hit a player if there is a skillcheck pending", async () => {
-      sudo("DM");
+      await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
       await sendAction("/hit player1 3");
     
@@ -463,7 +485,7 @@ describe("Commands", () => {
 
 });
 
-const rerender = () => {
+const rerender = async () => act(async () => { 
   cleanup();
   render(
     <GameRoom 
@@ -472,7 +494,7 @@ const rerender = () => {
       user={user}
     />
   )
-};
+});
 
 function initFirestore() {
   messagesSnapshot = [];
@@ -526,13 +548,13 @@ function updateUseCollectionMock() {
   }]);
 }
 
-function sudo(name) {
+async function sudo(name) {
   if (name == "DM") {
     user.uid = "78OjG96RrtZi5J3vqUChlmIdL503";
   } else {
     user.uid = charactersSnapshot.find(p => p.data().name === name).data().uid;
   }
-  rerender();
+  await rerender();
 }
 
 const sendChat = async (text) => act(async () => { 
@@ -548,5 +570,5 @@ const sendAction = async (text) => act(async () => {
 const roll = async (n = 10) => act(async () => { 
   utils.d20 = () => n;
   userEvent.click(screen.getByTestId("roll"));
-  rerender(); // click doesn't trigger rerender for some reason
+  await rerender(); // click doesn't trigger rerender for some reason
 });
