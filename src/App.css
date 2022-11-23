@@ -126,6 +126,13 @@ p {
   white-space: pre-wrap;
 }
 
+p>span {
+  font-weight: bold;
+  display: block;
+  color: #264c5e;
+  margin-bottom: 3px;
+}
+
 .message {
   display: flex;
   align-items: center;

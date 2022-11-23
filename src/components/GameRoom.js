@@ -95,11 +95,17 @@ export default function GameRoom(props) {
   return (
     <>
       <main>
-        {messages && messages
+        {messages && !isCharactersLoading && messages
           .filter(m => !m.private || m.uid === props.user.uid)
-          .map((msg, idx) => (
-            <ChatMessage key={idx} message={msg} user={props.user} />
-          ))
+          .map((msg, idx) => {
+            const character = getCharacterByUid(characters, msg.uid);
+            return <ChatMessage 
+              key={idx} 
+              message={msg} 
+              user={props.user} 
+              character={character} 
+            />
+          })
         }
         <div ref={bottom}></div>
       </main>
