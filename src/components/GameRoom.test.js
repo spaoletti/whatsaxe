@@ -254,9 +254,38 @@ describe("Commands", () => {
   });
 
   describe.each([
-    ["skillcheck", "player1 str 20", "nonexisting str 20", ["player1 str xx", "DC"], ["player2 str 20", "PLAYER2, make a STR skill check! (DC 20)"], "<player_name> <stat> <DC>"], 
-    ["hit", "player1 30", "nonexisting 3", ["player1 xx", "Hit Points"], ["player2 30", "PLAYER2, you lost 30 hit points!"], "<player_name> <hp>"]
-  ])("/%p common validations", (command, correctArgs, nonExistingPlayerArgs, wrongNumericArgs, anotherPlayerArgs, argsHelpText) => {
+    [
+      "skillcheck", 
+      "player1 str 20", 
+      "nonexisting str 20", 
+      ["player1 str xx", "DC"], 
+      ["player2 str 20", "PLAYER2, make a STR skill check! (DC 20)"], 
+      "<player_name> <stat> <DC>"
+    ], 
+    [
+      "hit", 
+      "player1 30", 
+      "nonexisting 3", 
+      ["player1 xx", "Hit Points"], 
+      ["player2 30", "PLAYER2, you lost 30 hit points!"], 
+      "<player_name> <hp>"
+    ],
+    [
+      "heal", 
+      "player1 5", 
+      "nonexisting 5", 
+      ["player1 xx", "Hit Points"], 
+      ["player2 2", "PLAYER2, you gained 2 hit points!"], 
+      "<player_name> <hp>"
+    ], 
+  ])("/%p common validations", (
+    command, 
+    correctArgs, 
+    nonExistingPlayerArgs, 
+    wrongNumericArgs, 
+    anotherPlayerArgs, 
+    argsHelpText
+  ) => {
 
     test("The DM can't target a dead player", async () => {
       await sudo("DM");
@@ -468,6 +497,59 @@ describe("Commands", () => {
       character.hp = character.maxhp;
     });
   
+  });
+
+  describe("/heal", () => {
+
+    test("A DM should be able to heal a player", async () => {
+      await sudo("DM");
+      await sendAction("/heal player1 6");
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().text).toBe("PLAYER1, you gained 6 hit points!");
+      expect(messagesSnapshot[0].data().target).toBe("abc");
+      expect(messagesSnapshot[0].data().command).toEqual({
+        args: ["player1", "6"], 
+        name: "heal"
+      });
+    });
+
+    test("The player should not see the roll button if the last request is a heal command", async () => {
+      await sudo("DM");
+      await sendAction("/heal player1 5");
+      await sudo("player1");
+
+      expect(screen.queryByTestId("roll")).toBeNull();      
+    });
+
+    test("A player targeted with a heal command should gain hit points", async () => {
+      const character = charactersSnapshot.find(p => p.data().name === "player1");
+      const newData = character.data();
+      newData.hp = 5;
+      character.data = () => newData;
+      await sudo("DM");
+      await sendAction("/heal player1 6");
+      await sudo("player1");
+
+      expect(character.data().hp).toBe(11);
+      character.hp = character.maxhp;
+    });
+
+    test("A player targeted with a heal command should not gain more hit points than his max hp", async () => {
+      const character = charactersSnapshot.find(p => p.data().name === "player1");
+      const newData = character.data();
+      newData.hp = 13;
+      character.data = () => newData;
+      await sudo("DM");
+      await sendAction("/heal player1 100");
+      await sudo("player1");
+
+      expect(character.data().hp).toBe(15);
+      character.hp = character.maxhp;
+    });
+
   });
 
 });

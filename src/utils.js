@@ -71,11 +71,12 @@ export function isDead(character) {
 
 const commands = {
   skillcheck: buildSkillCheckMessage,
-  hit: buildHitMessage
+  hit: buildHitMessage,
+  heal: buildHealMessage
 }
 
 export function buildMessage(text, type, user, characters, messages) {
-  if (isCommand(text, type, user)) {
+  if (isACommand(text, type, user)) {
     const command = parseCommand(text);
     let message;
     try {
@@ -102,12 +103,16 @@ export function parseCommand(commandString) {
   }
 }
 
-function isCommand(text, type, user) {
+function isACommand(text, type, user) {
   return type === "action" && isDM(user) && text.charAt(0) === "/";
 }
 
-export function isRequestUnresolved(command, request) {
-  return request && request.command.name === command && !request.resolved;
+export function isCommandName(command, request) {
+  return request && request.command.name === command;
+}
+
+export function isUnresolved(request) {
+  return request && !request.resolved;
 }
 
 function buildSkillCheckMessage(command, characters, user, messages) {
@@ -135,6 +140,21 @@ function buildHitMessage(command, characters, user, messages) {
   validateLastRequest(lastRequest, character);
   return commandMessage(
     `${character.name.toUpperCase()}, you lost ${command.args[1]} hit points!`,
+    command,
+    character,
+    user
+  );
+}
+
+function buildHealMessage(command, characters, user, messages) {
+  validateSyntax(command, 2, "/heal <player_name> <hp>");
+  const character = getCharacterByName(characters, command.args[0]);
+  validateTarget(character, command.args[0]);
+  validateNumber(command.args[1], "Hit Points");
+  const lastRequest = getLastRequest(messages, character);
+  validateLastRequest(lastRequest, character);
+  return commandMessage(
+    `${character.name.toUpperCase()}, you gained ${command.args[1]} hit points!`,
     command,
     character,
     user

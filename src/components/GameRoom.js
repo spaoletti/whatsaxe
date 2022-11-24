@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { deleteChats, getSnaphotData, resolveRequest, saveMessage, updateCharacterHp } from "../repository";
-import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isDead, isFromTheDM, isPlayer, isRequestUnresolved } from "../utils";
+import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isCommandName, isDead, isFromTheDM, isPlayer, isUnresolved } from "../utils";
 
 import ChatMessage from "./ChatMessage";
 
@@ -62,13 +62,22 @@ export default function GameRoom(props) {
   }
 
   function loseHp(hitRequest) {
-    const newHp = playerCharacter.hp - hitRequest.command.args[1];
+    const newHp = playerCharacter.hp - +hitRequest.command.args[1];
     updateCharacterHp(charactersRef, playerCharacter, newHp);    
     resolveRequest(messagesRef, hitRequest).then(_ => {
       if (newHp <= 0) {
         sendMessage("chat", `${playerCharacter.name.toUpperCase()}, you are dead.`);
       }      
     });
+  }
+
+  function gainHp(hitRequest) {
+    const newHp = Math.min(
+      playerCharacter.hp + +hitRequest.command.args[1], 
+      playerCharacter.maxhp
+    );
+    updateCharacterHp(charactersRef, playerCharacter, newHp);    
+    resolveRequest(messagesRef, hitRequest);
   }
 
   const handleKeyDown = (e) => {
@@ -86,8 +95,10 @@ export default function GameRoom(props) {
   });
 
   useEffect(() => {
-    if (isRequestUnresolved("hit", lastRequestForMe)) {
+    if (isCommandName("hit", lastRequestForMe) && isUnresolved(lastRequestForMe)) {
       loseHp(lastRequestForMe);
+    } else if (isCommandName("heal", lastRequestForMe) && isUnresolved(lastRequestForMe)) {
+      gainHp(lastRequestForMe);
     }
   // eslint-disable-next-line
   }, [lastRequestForMe]);
@@ -110,7 +121,7 @@ export default function GameRoom(props) {
         <div ref={bottom}></div>
       </main>
       <form onKeyDown={handleKeyDown}>
-        {isRequestUnresolved("skillcheck", lastRequestForMe) &&
+        {isCommandName("skillcheck", lastRequestForMe) && isUnresolved(lastRequestForMe) &&
           <button
             disabled={isCharactersLoading} 
             onClick={(e) => roll(lastRequestForMe)} 
