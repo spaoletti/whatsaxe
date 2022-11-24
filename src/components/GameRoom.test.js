@@ -216,24 +216,6 @@ describe("Death", () => {
     expect(messagesSnapshot[2].data().text).toBe("PLAYER1, you are dead.");
   });
 
-  test.each([
-    ["skillcheck", "player1 str 20"], 
-    ["hit", "player1 30"]
-  ])("The DM can't target a dead player with %p", async (command, args) => {
-    await sudo("DM");
-    await sendAction("/hit player1 30");
-    await sudo("player1");
-    await rerender();
-    await sudo("DM");
-    await sendAction(`/${command} ${args}`);
-
-    const messages = screen.queryAllByTestId("message");
-    expect(messages.length).toBe(3);
-    expect(messagesSnapshot[2].data().type).toBe("chat");
-    expect(messagesSnapshot[2].data().private).toBe(true);
-    expect(messagesSnapshot[2].data().text).toBe("!!! Invalid target: player1 !!!");
-  });
-
 });
 
 describe("Commands", () => {
@@ -271,11 +253,29 @@ describe("Commands", () => {
     expect(messagesSnapshot[1].data().text).toBe("/someCommand");
   });
 
-  describe("/skillcheck", () => {
+  describe.each([
+    ["skillcheck", "player1 str 20", "nonexisting str 20", ["player1 str xx", "DC"], ["player2 str 20", "PLAYER2, make a STR skill check! (DC 20)"], "<player_name> <stat> <DC>"], 
+    ["hit", "player1 30", "nonexisting 3", ["player1 xx", "Hit Points"], ["player2 30", "PLAYER2, you lost 30 hit points!"], "<player_name> <hp>"]
+  ])("/%p common validations", (command, correctArgs, nonExistingPlayerArgs, wrongNumericArgs, anotherPlayerArgs, argsHelpText) => {
 
-    test("When a DM asks a non existing player to make a skill check, he should receive an error message", async () => {
+    test("The DM can't target a dead player", async () => {
       await sudo("DM");
-      await sendAction("/skillcheck nonexisting str 20");
+      await sendAction("/hit player1 30");
+      await sudo("player1");
+      await rerender();
+      await sudo("DM");
+      await sendAction(`/${command} ${correctArgs}`);
+  
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(3);
+      expect(messagesSnapshot[2].data().type).toBe("chat");
+      expect(messagesSnapshot[2].data().private).toBe(true);
+      expect(messagesSnapshot[2].data().text).toBe("!!! Invalid target: player1 !!!");
+    });
+
+    test("When a DM targets a non existing player, he should receive an error message", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} ${nonExistingPlayerArgs}`);
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
@@ -284,6 +284,56 @@ describe("Commands", () => {
       expect(messagesSnapshot[0].data().text).toBe("!!! Invalid target: nonexisting !!!");
     });
     
+    test("The command should have the correct number of arguments or it throws an error message", async () => {
+      await sudo("DM");
+      await sendAction(`/${command}`);
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe(`!!! Wrong number of arguments. Correct syntax: /${command} ${argsHelpText} !!!`);
+    });
+
+    test("If numeric arguments are not numbers the DM should receive an error message", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} ${wrongNumericArgs[0]}`);
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe(`!!! ${wrongNumericArgs[1]} must be a number. Provided: xx !!!`);
+    });
+
+    test("If there is a request pending for a player, the DM should NOT be able to target him", async () => {
+      await sudo("DM");
+      await sendAction("/skillcheck player1 dex 20");
+      await sendAction(`/${command} ${correctArgs}`);
+
+      const messages = screen.queryAllByTestId("message");    
+      expect(messages.length).toBe(2);
+      expect(messagesSnapshot[1].data().type).toBe("chat");
+      expect(messagesSnapshot[1].data().private).toBe(true);
+      expect(messagesSnapshot[1].data().text).toBe("!!! player1 has another request pending !!!");
+    });
+
+    test("If there is a request pending, the DM should be able to target another player", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} ${correctArgs}`);
+      await sendAction(`/${command} ${anotherPlayerArgs[0]}`);
+
+      const messages = screen.queryAllByTestId("message");    
+      expect(messages.length).toBe(2);
+      expect(messagesSnapshot[1].data().type).toBe("chat");
+      expect(messagesSnapshot[1].data().text).toBe(anotherPlayerArgs[1]);
+      expect(messagesSnapshot[1].data().target).toBe("def");
+    });
+
+  });
+
+  describe("/skillcheck", () => {
+
     test("When a DM asks a player to make a skill check on a wrong stat, he should receive an error message", async () => {
       await sudo("DM");
       await sendAction("/skillcheck player1 xxx 20");
@@ -294,29 +344,7 @@ describe("Commands", () => {
       expect(messagesSnapshot[0].data().private).toBe(true);
       expect(messagesSnapshot[0].data().text).toBe("!!! Unknown stat: xxx !!!");
     });
-    
-    test("When a DM asks a player to make a skill check on a DC that's not a number, he should receive an error message", async () => {
-      await sudo("DM");
-      await sendAction("/skillcheck player1 str xx");
-    
-      const messages = screen.queryAllByTestId("message");
-      expect(messages.length).toBe(1);
-      expect(messagesSnapshot[0].data().type).toBe("chat");
-      expect(messagesSnapshot[0].data().private).toBe(true);
-      expect(messagesSnapshot[0].data().text).toBe("!!! DC must be a number. Provided: xx !!!");
-    });
-    
-    test("A skill check command should have 3 arguments, or it throws an error message", async () => {
-      await sudo("DM");
-      await sendAction("/skillcheck");
-    
-      const messages = screen.queryAllByTestId("message");
-      expect(messages.length).toBe(1);
-      expect(messagesSnapshot[0].data().type).toBe("chat");
-      expect(messagesSnapshot[0].data().private).toBe(true);
-      expect(messagesSnapshot[0].data().text).toBe("!!! Wrong number of arguments. Correct syntax: /skillcheck <player_name> <stat> <DC> !!!");
-    });
-    
+            
     test("A DM should be able to ask for a skill check", async () => {
       await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
@@ -348,30 +376,6 @@ describe("Commands", () => {
 
       const rollButton = screen.queryByTestId("roll");
       expect(rollButton).toBeFalsy();
-    });
-
-    test("If there is a skill check pending, the DM should NOT be able to ask another one to the same player", async () => {
-      await sudo("DM");
-      await sendAction("/skillcheck player1 str 20");
-      await sendAction("/skillcheck player1 dex 20");
-
-      const messages = screen.queryAllByTestId("message");    
-      expect(messages.length).toBe(2);
-      expect(messagesSnapshot[1].data().type).toBe("chat");
-      expect(messagesSnapshot[1].data().private).toBe(true);
-      expect(messagesSnapshot[1].data().text).toBe("!!! player1 has another request pending !!!");
-    });
-
-    test("If there is a skill check pending, the DM should be able to ask another one to another player", async () => {
-      await sudo("DM");
-      await sendAction("/skillcheck player1 str 20");
-      await sendAction("/skillcheck player2 dex 20");
-
-      const messages = screen.queryAllByTestId("message");    
-      expect(messages.length).toBe(2);
-      expect(messagesSnapshot[1].data().type).toBe("chat");
-      expect(messagesSnapshot[1].data().text).toBe("PLAYER2, make a DEX skill check! (DC 20)");
-      expect(messagesSnapshot[1].data().target).toBe("def");
     });
 
     test.each([
@@ -431,39 +435,6 @@ describe("Commands", () => {
 
   describe("/hit", () => {
 
-    test("When a DM hit a non existing player, he should receive an error message", async () => {
-      await sudo("DM");
-      await sendAction("/hit nonexisting 1d8");
-    
-      const messages = screen.queryAllByTestId("message");
-      expect(messages.length).toBe(1);
-      expect(messagesSnapshot[0].data().type).toBe("chat");
-      expect(messagesSnapshot[0].data().private).toBe(true);
-      expect(messagesSnapshot[0].data().text).toBe("!!! Invalid target: nonexisting !!!");
-    });
-
-    test("A hit command should have 2 arguments, or it throws an error message", async () => {
-      await sudo("DM");
-      await sendAction("/hit");
-    
-      const messages = screen.queryAllByTestId("message");
-      expect(messages.length).toBe(1);
-      expect(messagesSnapshot[0].data().type).toBe("chat");
-      expect(messagesSnapshot[0].data().private).toBe(true);
-      expect(messagesSnapshot[0].data().text).toBe("!!! Wrong number of arguments. Correct syntax: /hit <player_name> <hp> !!!");
-    });
-
-    test("A hit command should have a numerical hit points argument", async () => {
-      await sudo("DM");
-      await sendAction("/hit player1 xx");
-    
-      const messages = screen.queryAllByTestId("message");
-      expect(messages.length).toBe(1);
-      expect(messagesSnapshot[0].data().type).toBe("chat");
-      expect(messagesSnapshot[0].data().private).toBe(true);
-      expect(messagesSnapshot[0].data().text).toBe("!!! Hit Points must be a number. Provided: xx !!!");
-    });
-
     test("A DM should be able to hit a player", async () => {
       await sudo("DM");
       await sendAction("/hit player1 6");
@@ -495,17 +466,6 @@ describe("Commands", () => {
       const character = charactersSnapshot.find(p => p.data().name === "player1");
       expect(character.data().hp).toBe(9);
       character.hp = character.maxhp;
-    });
-
-    test("The DM should not be able to hit a player if there is a skillcheck pending", async () => {
-      await sudo("DM");
-      await sendAction("/skillcheck player1 str 20");
-      await sendAction("/hit player1 3");
-    
-      const messages = screen.queryAllByTestId("message");
-      expect(messages.length).toBe(2);
-      expect(messagesSnapshot[1].data().type).toBe("chat");
-      expect(messagesSnapshot[1].data().text).toBe("!!! player1 has another request pending !!!");
     });
   
   });

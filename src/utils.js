@@ -1,7 +1,8 @@
 // --------------------------------------- players ---------------------------------------
 
 export function isDM(uidObject) {
-  return uidObject.uid === "78OjG96RrtZi5J3vqUChlmIdL503";
+  return uidObject.uid === "78OjG96RrtZi5J3vqUChlmIdL503" ||
+    uidObject.uid === "xjoPcMx0COMHy2wThp7ydAviPw92";
 }
 
 export function isPlayer(uidObject) {

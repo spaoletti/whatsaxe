@@ -22,7 +22,7 @@ import Spinner from './components/Spinner';
 //   appId: "1:1067470074651:web:b388a0f0d7d51d12e4d9be"
 // };
 
-// test
+// dev
 const firebaseConfig = {
   apiKey: "AIzaSyCPpQbdT92wX8aRb_wvyp0iclVIGMyN_Hs",
   authDomain: "whatsaxe-dev.firebaseapp.com",
