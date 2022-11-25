@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { deleteChats, getSnaphotData, resolveRequest, saveMessage, updateCharacterHp } from "../repository";
-import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isCommandUnresolved, isDead, isFromTheDM, isPlayer } from "../utils";
+import { buildMessage, parseRoll, d, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isCommandName, isCommandUnresolved, isDead, isFromTheDM, isPlayer } from "../utils";
 
 import ChatMessage from "./ChatMessage";
 
@@ -49,8 +49,16 @@ export default function GameRoom(props) {
     );
   }
 
-  function roll(rollRequest) {
-    const die = d20();
+  function handleRoll(rollRequest) {
+    if (isCommandName("skillcheck", rollRequest)) {
+      rollSkillCheck(rollRequest);
+    } else if (isCommandName("askroll", rollRequest)) {
+      rollDice(rollRequest);
+    }
+  }
+
+  function rollSkillCheck(rollRequest) {
+    const die = d(20);
     const stat = rollRequest.command.args[1];
     const dc = rollRequest.command.args[2];
     const modifier = getModifierForStat(playerCharacter, stat);
@@ -62,6 +70,23 @@ export default function GameRoom(props) {
       `It's a ${outcome}!`
     resolveRequest(messagesRef, rollRequest);
     sendMessage("chat", message);
+  }
+
+  function rollDice(rollRequest) {
+    const rollExp = rollRequest.command.args[1];
+    const { howManyTimes, diceType } = parseRoll(rollExp);
+    let total = 0;
+    let rolls = "";
+    for (let c = 1; c <= howManyTimes; c++) {
+      const roll = d(diceType);
+      total += roll;
+      rolls += `${roll} + `;
+    }
+    const message = 
+      `${playerCharacter.name.toUpperCase()} rolled ${rollExp}!\n` +
+      `${rolls.slice(0, -3)} = ${total}`;
+    resolveRequest(messagesRef, rollRequest);
+    sendMessage("chat", message);  
   }
 
   function loseHp(hitRequest) {
@@ -127,7 +152,7 @@ export default function GameRoom(props) {
         {isRollButtonVisible &&
           <button
             disabled={isCharactersLoading} 
-            onClick={(e) => roll(lastRequestForMe)} 
+            onClick={(e) => handleRoll(lastRequestForMe)} 
             data-testid="roll" 
             type="button"
           >

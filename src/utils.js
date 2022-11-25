@@ -38,8 +38,13 @@ function findLastMessageThatMatchCriteria(messages, condition) {
 
 // --------------------------------------- dice ---------------------------------------
 
-export function d20() {
-  return Math.floor(Math.random() * 20) + 1;
+export function d(n) {
+  return Math.floor(Math.random() * n) + 1;
+}
+
+export function parseRoll(rollString) {
+  const [howManyTimes, diceType] = rollString.split("d");
+  return { howManyTimes, diceType };
 }
 
 // --------------------------------------- characters ---------------------------------------

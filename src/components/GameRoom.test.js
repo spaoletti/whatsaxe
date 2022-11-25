@@ -599,6 +599,64 @@ describe("Commands", () => {
       expect(rollButton).toBeTruthy();
     });
 
+    test("ONLY the player asked for a roll should be able to see the roll button", async () => {
+      await sudo("DM");
+      await sendAction("/askroll player1 5d6");
+      await sudo("player2");    
+
+      const rollButton = screen.queryByTestId("roll");
+      expect(rollButton).toBeFalsy();
+    });
+
+    test("A player should be able to roll the dice", async () => {
+      await sudo("DM");
+      await sendAction("/askroll player1 5d6");
+      await sudo("player1");
+      await roll(3);
+      
+      const messages = screen.queryAllByTestId("message");    
+      expect(messages.length).toBe(2);
+      expect(messagesSnapshot[1].data().type).toBe("chat");
+      expect(messagesSnapshot[1].data().text).toBe(
+        `PLAYER1 rolled 5d6!\n` +
+        `3 + 3 + 3 + 3 + 3 = 15`
+      );
+    });
+
+    test("Rolling the dice should resolve the pending askroll command", async () => {
+      await sudo("DM");
+      await sendAction("/askroll player1 3d12");
+      await sudo("player1");
+      await roll();
+
+      const messages = screen.queryAllByTestId("message");    
+      expect(messages.length).toBe(2);
+      expect(messagesSnapshot[0].data().resolved).toBe(true);
+    });
+
+    test("The player should not see the roll button if the last dice roll is resolved", async () => {
+      await sudo("DM");
+      await sendAction("/askroll player1 3d12");
+      await sudo("player1");
+      await roll();
+
+      expect(screen.queryByTestId("roll")).toBeNull();
+    });
+
+    test("If there is a resolved dice roll, the DM should be able to ask another one to the same player", async () => {
+      await sudo("DM");
+      await sendAction("/askroll player1 3d12");
+      await sudo("player1");
+      await roll();
+      await sudo("DM");
+      await sendAction("/askroll player1 1d20");
+
+      const messages = screen.queryAllByTestId("message");    
+      expect(messages.length).toBe(3);
+      expect(messagesSnapshot[2].data().type).toBe("chat");
+      expect(messagesSnapshot[2].data().text).toBe("PLAYER1, roll 1d20!");
+    });
+
   });
 
 });
@@ -686,7 +744,7 @@ const sendAction = async (text) => act(async () => {
 });
 
 const roll = async (n = 10) => act(async () => { 
-  utils.d20 = () => n;
+  utils.d = (_) => n;
   userEvent.click(screen.getByTestId("roll"));
   await rerender(); // click doesn't trigger rerender for some reason
 });
