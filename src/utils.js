@@ -116,6 +116,10 @@ export function isUnresolved(request) {
   return request && !request.resolved;
 }
 
+export function isCommandUnresolved(commandName, request) {
+  return isCommandName(commandName, request) && isUnresolved(request);
+}
+
 function buildSkillCheckMessage(command, characters, user, messages) {
   validateSyntax(command, 3, "/skillcheck <player_name> <stat> <DC>");
   const character = getCharacterByName(characters, command.args[0]);
@@ -166,7 +170,7 @@ function buildAskRollMessage(command, characters, user, messages) {
   validateSyntax(command, 2, "/askroll <player_name> <die>");
   const character = getCharacterByName(characters, command.args[0]);
   validateTarget(character, command.args[0]);
-  // TODO validateDice(command.args[1], "Dice");
+  validateDice(command.args[1]);
   const lastRequest = getLastRequest(messages, character);
   validateLastRequest(lastRequest, character);
   return commandMessage(
@@ -226,6 +230,14 @@ function validateLastRequest(lastRequest, character) {
   validate(
     lastRequest && lastRequest.target === character.uid && !lastRequest.resolved,
     `${character.name} has another request pending`
+  );
+}
+
+export function validateDice(dice) {
+  const diceRegExp = /\dd(4|6|8|10|12|20)/;
+  validate(
+    !diceRegExp.test(dice),
+    `Unknown dice: ${dice}`
   );
 }
 

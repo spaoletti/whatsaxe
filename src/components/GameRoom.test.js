@@ -282,10 +282,10 @@ describe("Commands", () => {
     ], 
     [
       "askroll", 
-      "player1 d20", 
-      "nonexisting d20", 
+      "player1 1d20", 
+      "nonexisting 1d20", 
       null, 
-      ["player2 d20", "PLAYER2, roll d20!"], 
+      ["player2 1d20", "PLAYER2, roll 1d20!"], 
       "<player_name> <die>"
     ], 
   ])("/%p common validations", (
@@ -558,6 +558,45 @@ describe("Commands", () => {
 
       expect(character.data().hp).toBe(15);
       character.hp = character.maxhp;
+    });
+
+  });
+
+  describe("/askroll", () => {
+
+    test("When a DM asks a player to roll some wrong dice, he should receive an error message", async () => {
+      await sudo("DM");
+      await sendAction("/askroll player1 xx");
+
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe("!!! Unknown dice: xx !!!");
+    });
+  
+    test("A DM should be able to ask for a roll", async () => {
+      await sudo("DM");
+      await sendAction("/askroll player1 2d6");
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().text).toBe("PLAYER1, roll 2d6!");
+      expect(messagesSnapshot[0].data().target).toBe("abc");
+      expect(messagesSnapshot[0].data().command).toEqual({
+        args: ["player1", "2d6"], 
+        name: "askroll"
+      });
+    });
+
+    test("A player asked for a roll should be able to see the roll button", async () => {
+      await sudo("DM");
+      await sendAction("/askroll player1 3d8");
+      await sudo("player1");      
+
+      const rollButton = screen.queryByTestId("roll");
+      expect(rollButton).toBeTruthy();
     });
 
   });

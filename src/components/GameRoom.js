@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { deleteChats, getSnaphotData, resolveRequest, saveMessage, updateCharacterHp } from "../repository";
-import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isCommandName, isDead, isFromTheDM, isPlayer, isUnresolved } from "../utils";
+import { buildMessage, d20, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isCommandUnresolved, isDead, isFromTheDM, isPlayer } from "../utils";
 
 import ChatMessage from "./ChatMessage";
 
@@ -25,6 +25,9 @@ export default function GameRoom(props) {
   const isInputEmpty = inputText.trim().length === 0;  
   const isChatDisabled = isInputEmpty || inputText.charAt(0) === "/";  
   const isActionDisabled = isInputEmpty || isPlayerDead || (isPlayer(props.user) && !isFromTheDM(lastAction));
+  const isRollButtonVisible = 
+    isCommandUnresolved("skillcheck", lastRequestForMe) || 
+    isCommandUnresolved("askroll", lastRequestForMe);
 
   const sendMessage = (type, text) => {
     setInputText("");
@@ -95,9 +98,9 @@ export default function GameRoom(props) {
   });
 
   useEffect(() => {
-    if (isCommandName("hit", lastRequestForMe) && isUnresolved(lastRequestForMe)) {
+    if (isCommandUnresolved("hit", lastRequestForMe)) {
       loseHp(lastRequestForMe);
-    } else if (isCommandName("heal", lastRequestForMe) && isUnresolved(lastRequestForMe)) {
+    } else if (isCommandUnresolved("heal", lastRequestForMe)) {
       gainHp(lastRequestForMe);
     }
   // eslint-disable-next-line
@@ -121,7 +124,7 @@ export default function GameRoom(props) {
         <div ref={bottom}></div>
       </main>
       <form onKeyDown={handleKeyDown}>
-        {isCommandName("skillcheck", lastRequestForMe) && isUnresolved(lastRequestForMe) &&
+        {isRollButtonVisible &&
           <button
             disabled={isCharactersLoading} 
             onClick={(e) => roll(lastRequestForMe)} 
