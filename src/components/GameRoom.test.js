@@ -65,6 +65,8 @@ const user = {
   uid: dungeonMasterUid
 };
 
+const testif = (condition) => condition ? test : () => {};
+
 beforeEach(() => {
   initFirestore();  
   rerender();
@@ -278,6 +280,14 @@ describe("Commands", () => {
       ["player2 2", "PLAYER2, you gained 2 hit points!"], 
       "<player_name> <hp>"
     ], 
+    [
+      "askroll", 
+      "player1 d20", 
+      "nonexisting d20", 
+      null, 
+      ["player2 d20", "PLAYER2, roll d20!"], 
+      "<player_name> <die>"
+    ], 
   ])("/%p common validations", (
     command, 
     correctArgs, 
@@ -324,7 +334,7 @@ describe("Commands", () => {
       expect(messagesSnapshot[0].data().text).toBe(`!!! Wrong number of arguments. Correct syntax: /${command} ${argsHelpText} !!!`);
     });
 
-    test("If numeric arguments are not numbers the DM should receive an error message", async () => {
+    testif(wrongNumericArgs)("If numeric arguments are not numbers the DM should receive an error message", async () => {
       await sudo("DM");
       await sendAction(`/${command} ${wrongNumericArgs[0]}`);
     

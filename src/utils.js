@@ -72,7 +72,8 @@ export function isDead(character) {
 const commands = {
   skillcheck: buildSkillCheckMessage,
   hit: buildHitMessage,
-  heal: buildHealMessage
+  heal: buildHealMessage,
+  askroll: buildAskRollMessage
 }
 
 export function buildMessage(text, type, user, characters, messages) {
@@ -155,6 +156,21 @@ function buildHealMessage(command, characters, user, messages) {
   validateLastRequest(lastRequest, character);
   return commandMessage(
     `${character.name.toUpperCase()}, you gained ${command.args[1]} hit points!`,
+    command,
+    character,
+    user
+  );
+}
+
+function buildAskRollMessage(command, characters, user, messages) {
+  validateSyntax(command, 2, "/askroll <player_name> <die>");
+  const character = getCharacterByName(characters, command.args[0]);
+  validateTarget(character, command.args[0]);
+  // TODO validateDice(command.args[1], "Dice");
+  const lastRequest = getLastRequest(messages, character);
+  validateLastRequest(lastRequest, character);
+  return commandMessage(
+    `${character.name.toUpperCase()}, roll ${command.args[1]}!`,
     command,
     character,
     user
