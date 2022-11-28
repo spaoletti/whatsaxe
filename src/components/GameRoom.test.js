@@ -378,31 +378,36 @@ describe("Commands", () => {
       "skillcheck", 
       ["player1 str xx", "DC"], 
       "<player_name> <stat> <DC>",
-      "player1 xxx 20"
+      "player1 xxx 20",
+      null
     ], 
     [
       "hit", 
       ["player1 xx", "Hit Points"], 
       "<player_name> <hp>",
+      null,
       null
     ],
     [
       "heal", 
       ["player1 xx", "Hit Points"], 
       "<player_name> <hp>",
+      null,
       null
     ], 
     [
       "askroll", 
       null, 
       "<player_name> <die>",
-      null
+      null,
+      "player1 xx"
     ], 
   ])("/%p common Arguments validations", (
     command, 
     wrongNumericArgs, 
     argsHelpText,
-    wrongStatArgs
+    wrongStatArgs,
+    wrongDiceArgs
   ) => {
 
     test("The command should have the correct number of arguments or it throws an error message", async () => {
@@ -436,6 +441,17 @@ describe("Commands", () => {
       expect(messagesSnapshot[0].data().type).toBe("chat");
       expect(messagesSnapshot[0].data().private).toBe(true);
       expect(messagesSnapshot[0].data().text).toBe("!!! Unknown stat: xxx !!!");
+    });
+
+    testif(wrongDiceArgs)("When a DM asks a player to roll some wrong dice, he should receive an error message", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} ${wrongDiceArgs}`);
+
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe("!!! Unknown dice: xx !!!");
     });
 
   });
@@ -603,17 +619,6 @@ describe("Commands", () => {
   });
 
   describe("/askroll", () => {
-
-    test("When a DM asks a player to roll some wrong dice, he should receive an error message", async () => {
-      await sudo("DM");
-      await sendAction("/askroll player1 xx");
-
-      const messages = screen.queryAllByTestId("message");
-      expect(messages.length).toBe(1);
-      expect(messagesSnapshot[0].data().type).toBe("chat");
-      expect(messagesSnapshot[0].data().private).toBe(true);
-      expect(messagesSnapshot[0].data().text).toBe("!!! Unknown dice: xx !!!");
-    });
   
     test("A DM should be able to ask for a roll", async () => {
       await sudo("DM");
