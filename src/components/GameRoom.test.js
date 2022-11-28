@@ -260,41 +260,31 @@ describe("Commands", () => {
       "skillcheck", 
       "player1 str 20", 
       "nonexisting str 20", 
-      ["player1 str xx", "DC"], 
       ["player2 str 20", "PLAYER2, make a STR skill check! (DC 20)"], 
-      "<player_name> <stat> <DC>"
     ], 
     [
       "hit", 
       "player1 30", 
       "nonexisting 3", 
-      ["player1 xx", "Hit Points"], 
       ["player2 30", "PLAYER2, you lost 30 hit points!"], 
-      "<player_name> <hp>"
     ],
     [
       "heal", 
       "player1 5", 
       "nonexisting 5", 
-      ["player1 xx", "Hit Points"], 
       ["player2 2", "PLAYER2, you gained 2 hit points!"], 
-      "<player_name> <hp>"
     ], 
     [
       "askroll", 
       "player1 1d20", 
       "nonexisting 1d20", 
-      null, 
       ["player2 1d20", "PLAYER2, roll 1d20!"], 
-      "<player_name> <die>"
     ], 
-  ])("/%p common validations", (
+  ])("/%p common Request validations", (
     command, 
     correctArgs, 
     nonExistingPlayerArgs, 
-    wrongNumericArgs, 
     anotherPlayerArgs, 
-    argsHelpText
   ) => {
 
     test("The DM can't target a dead player", async () => {
@@ -323,28 +313,6 @@ describe("Commands", () => {
       expect(messagesSnapshot[0].data().text).toBe("!!! Invalid target: nonexisting !!!");
     });
     
-    test("The command should have the correct number of arguments or it throws an error message", async () => {
-      await sudo("DM");
-      await sendAction(`/${command}`);
-    
-      const messages = screen.queryAllByTestId("message");
-      expect(messages.length).toBe(1);
-      expect(messagesSnapshot[0].data().type).toBe("chat");
-      expect(messagesSnapshot[0].data().private).toBe(true);
-      expect(messagesSnapshot[0].data().text).toBe(`!!! Wrong number of arguments. Correct syntax: /${command} ${argsHelpText} !!!`);
-    });
-
-    testif(wrongNumericArgs)("If numeric arguments are not numbers the DM should receive an error message", async () => {
-      await sudo("DM");
-      await sendAction(`/${command} ${wrongNumericArgs[0]}`);
-    
-      const messages = screen.queryAllByTestId("message");
-      expect(messages.length).toBe(1);
-      expect(messagesSnapshot[0].data().type).toBe("chat");
-      expect(messagesSnapshot[0].data().private).toBe(true);
-      expect(messagesSnapshot[0].data().text).toBe(`!!! ${wrongNumericArgs[1]} must be a number. Provided: xx !!!`);
-    });
-
     test("If there is a request pending for a player, the DM should NOT be able to target him", async () => {
       await sudo("DM");
       await sendAction("/skillcheck player1 dex 20");
@@ -371,11 +339,63 @@ describe("Commands", () => {
 
   });
 
-  describe("/skillcheck", () => {
+  describe.each([
+    [
+      "skillcheck", 
+      ["player1 str xx", "DC"], 
+      "<player_name> <stat> <DC>",
+      "player1 xxx 20"
+    ], 
+    [
+      "hit", 
+      ["player1 xx", "Hit Points"], 
+      "<player_name> <hp>",
+      null
+    ],
+    [
+      "heal", 
+      ["player1 xx", "Hit Points"], 
+      "<player_name> <hp>",
+      null
+    ], 
+    [
+      "askroll", 
+      null, 
+      "<player_name> <die>",
+      null
+    ], 
+  ])("/%p common Arguments validations", (
+    command, 
+    wrongNumericArgs, 
+    argsHelpText,
+    wrongStatArgs
+  ) => {
 
-    test("When a DM asks a player to make a skill check on a wrong stat, he should receive an error message", async () => {
+    test("The command should have the correct number of arguments or it throws an error message", async () => {
       await sudo("DM");
-      await sendAction("/skillcheck player1 xxx 20");
+      await sendAction(`/${command}`);
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe(`!!! Wrong number of arguments. Correct syntax: /${command} ${argsHelpText} !!!`);
+    });
+
+    testif(wrongNumericArgs)("If numeric arguments are not numbers the DM should receive an error message", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} ${wrongNumericArgs[0]}`);
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe(`!!! ${wrongNumericArgs[1]} must be a number. Provided: xx !!!`);
+    });
+
+    testif(wrongStatArgs)("When a DM asks a player to make a skill check on a wrong stat, he should receive an error message", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} ${wrongStatArgs}`);
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
@@ -383,7 +403,11 @@ describe("Commands", () => {
       expect(messagesSnapshot[0].data().private).toBe(true);
       expect(messagesSnapshot[0].data().text).toBe("!!! Unknown stat: xxx !!!");
     });
-            
+
+  });
+
+  describe("/skillcheck", () => {
+
     test("A DM should be able to ask for a skill check", async () => {
       await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
@@ -658,6 +682,21 @@ describe("Commands", () => {
     });
 
   });
+
+  // describe("/roll", () => {
+
+  //   test("When a DM tries to roll some wrong dice, he should receive an error message", async () => {
+  //     await sudo("DM");
+  //     await sendAction("/roll xx");
+
+  //     const messages = screen.queryAllByTestId("message");
+  //     expect(messages.length).toBe(1);
+  //     expect(messagesSnapshot[0].data().type).toBe("chat");
+  //     expect(messagesSnapshot[0].data().private).toBe(true);
+  //     expect(messagesSnapshot[0].data().text).toBe("!!! Unknown dice: xx !!!");
+  //   });
+
+  // });
 
 });
 
