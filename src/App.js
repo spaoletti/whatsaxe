@@ -11,28 +11,11 @@ import { slide as Menu } from 'react-burger-menu'
 import CharacterSheet from './components/CharacterSheet';
 import PlayersList from './components/PlayersList';
 import Spinner from './components/Spinner';
+import { config } from './config';
 
-// prod
-// const firebaseConfig = {
-//   apiKey: "AIzaSyC6J82sRFdawN4miLvzcKKtAfSvG11k1t8",
-//   authDomain: "whatsaxe-78703.firebaseapp.com",
-//   projectId: "whatsaxe-78703",
-//   storageBucket: "whatsaxe-78703.appspot.com",
-//   messagingSenderId: "1067470074651",
-//   appId: "1:1067470074651:web:b388a0f0d7d51d12e4d9be"
-// };
+const env = process.env.REACT_APP_ENV ? process.env.REACT_APP_ENV : "dev";
 
-// dev
-const firebaseConfig = {
-  apiKey: "AIzaSyCPpQbdT92wX8aRb_wvyp0iclVIGMyN_Hs",
-  authDomain: "whatsaxe-dev.firebaseapp.com",
-  projectId: "whatsaxe-dev",
-  storageBucket: "whatsaxe-dev.appspot.com",
-  messagingSenderId: "895216685697",
-  appId: "1:895216685697:web:b3c73be313e8f0c986f380"
-};
-
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(config[env]);
 
 const auth = firebase.auth();
 const firestore = firebase.firestore();
