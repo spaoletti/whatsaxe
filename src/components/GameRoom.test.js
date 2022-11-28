@@ -371,6 +371,26 @@ describe("Commands", () => {
       expect(rollButton).toBeFalsy();
     });
 
+    test("Rolling the dice should resolve the pending roll request", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} ${correctArgs}`);
+      await sudo("player1");
+      await roll();
+
+      const messages = screen.queryAllByTestId("message");    
+      expect(messages.length).toBe(2);
+      expect(messagesSnapshot[0].data().resolved).toBe(true);
+    });
+
+    test("The player should not see the roll button if the last roll request is resolved", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} ${correctArgs}`);
+      await sudo("player1");
+      await roll();
+
+      expect(screen.queryByTestId("roll")).toBeNull();
+    });
+
   });
 
   describe.each([
@@ -490,26 +510,6 @@ describe("Commands", () => {
         `${die} + 4 = ${die + 4}\n` +
         `It's a ${outcome}!`
       );
-    });
-
-    test("Rolling the dice should resolve the pending skill check", async () => {
-      await sudo("DM");
-      await sendAction("/skillcheck player1 str 20");
-      await sudo("player1");
-      await roll();
-
-      const messages = screen.queryAllByTestId("message");    
-      expect(messages.length).toBe(2);
-      expect(messagesSnapshot[0].data().resolved).toBe(true);
-    });
-
-    test("The player should not see the roll button if the last skill check is resolved", async () => {
-      await sudo("DM");
-      await sendAction("/skillcheck player1 str 20");
-      await sudo("player1");
-      await roll();
-
-      expect(screen.queryByTestId("roll")).toBeNull();
     });
 
     test("If there is a resolved skill check, the DM should be able to ask another one to the same player", async () => {
@@ -648,26 +648,6 @@ describe("Commands", () => {
         `PLAYER1 rolled 5d6!\n` +
         `3 + 3 + 3 + 3 + 3 = 15`
       );
-    });
-
-    test("Rolling the dice should resolve the pending askroll command", async () => {
-      await sudo("DM");
-      await sendAction("/askroll player1 3d12");
-      await sudo("player1");
-      await roll();
-
-      const messages = screen.queryAllByTestId("message");    
-      expect(messages.length).toBe(2);
-      expect(messagesSnapshot[0].data().resolved).toBe(true);
-    });
-
-    test("The player should not see the roll button if the last dice roll is resolved", async () => {
-      await sudo("DM");
-      await sendAction("/askroll player1 3d12");
-      await sudo("player1");
-      await roll();
-
-      expect(screen.queryByTestId("roll")).toBeNull();
     });
 
     test("If there is a resolved dice roll, the DM should be able to ask another one to the same player", async () => {
