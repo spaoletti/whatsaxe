@@ -21,7 +21,7 @@ export default function GameRoom(props) {
   const lastRequestForMe = getLastRequest(messages, props.user);
   const isCharactersLoading = !characters;
   const playerCharacter = !isCharactersLoading && getCharacterByUid(characters, props.user.uid);
-  const isPlayerDead = !isCharactersLoading && isPlayer(props.user) && isDead(playerCharacter);
+  const isPlayerDead = !isCharactersLoading && playerCharacter && isPlayer(props.user) && isDead(playerCharacter);
   const isInputEmpty = inputText.trim().length === 0;  
   const isChatDisabled = isInputEmpty || inputText.charAt(0) === "/";  
   const isActionDisabled = isInputEmpty || isPlayerDead || (isPlayer(props.user) && !isFromTheDM(lastAction));

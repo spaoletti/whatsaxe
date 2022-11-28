@@ -57,7 +57,7 @@ export function getModifierForStat(character, statName) {
 }
 
 export function getModifier(statValue) {
-  return (statValue - 10) / 2;
+  return Math.floor((statValue - 10) / 2);
 }
 
 function getCharacterByName(characters, name) {
