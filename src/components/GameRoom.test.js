@@ -283,7 +283,7 @@ describe("Commands", () => {
   ])("/%p common Request validations", (
     command, 
     correctArgs, 
-    nonExistingPlayerArgs, 
+    nonExistingPlayerArgs,
     anotherPlayerArgs, 
   ) => {
 
@@ -335,6 +335,40 @@ describe("Commands", () => {
       expect(messagesSnapshot[1].data().type).toBe("chat");
       expect(messagesSnapshot[1].data().text).toBe(anotherPlayerArgs[1]);
       expect(messagesSnapshot[1].data().target).toBe("def");
+    });
+
+  });
+
+  describe.each([
+    [
+      "skillcheck",
+      "player1 str 20"
+    ],
+    [
+      "askroll",
+      "player1 3d8"
+    ]
+  ])("/%p common Roll Request validation", (
+    command,
+    correctArgs
+  ) => {
+
+    test("A player asked for a roll should be able to see the roll button", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} ${correctArgs}`);
+      await sudo("player1");      
+
+      const rollButton = screen.queryByTestId("roll");
+      expect(rollButton).toBeTruthy();
+    });
+
+    test("ONLY the player asked for a roll should be able to see the roll button", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} ${correctArgs}`);
+      await sudo("player2");    
+
+      const rollButton = screen.queryByTestId("roll");
+      expect(rollButton).toBeFalsy();
     });
 
   });
@@ -423,24 +457,6 @@ describe("Commands", () => {
       });
     });
   
-    test("A player asked for a skill check should be able to see the roll button", async () => {
-      await sudo("DM");
-      await sendAction("/skillcheck player1 str 20");
-      await sudo("player1");      
-
-      const rollButton = screen.queryByTestId("roll");
-      expect(rollButton).toBeTruthy();
-    });
-
-    test("ONLY the player asked for a skill check should be able to see the roll button", async () => {
-      await sudo("DM");
-      await sendAction("/skillcheck player1 str 20");
-      await sudo("player2");    
-
-      const rollButton = screen.queryByTestId("roll");
-      expect(rollButton).toBeFalsy();
-    });
-
     test.each([
       [19, "success"], 
       [2, "failure"]
@@ -612,24 +628,6 @@ describe("Commands", () => {
         args: ["player1", "2d6"], 
         name: "askroll"
       });
-    });
-
-    test("A player asked for a roll should be able to see the roll button", async () => {
-      await sudo("DM");
-      await sendAction("/askroll player1 3d8");
-      await sudo("player1");      
-
-      const rollButton = screen.queryByTestId("roll");
-      expect(rollButton).toBeTruthy();
-    });
-
-    test("ONLY the player asked for a roll should be able to see the roll button", async () => {
-      await sudo("DM");
-      await sendAction("/askroll player1 5d6");
-      await sudo("player2");    
-
-      const rollButton = screen.queryByTestId("roll");
-      expect(rollButton).toBeFalsy();
     });
 
     test("A player should be able to roll the dice", async () => {
