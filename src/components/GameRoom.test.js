@@ -3,12 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { act } from "react-dom/test-utils";
 import 'react-firebase-hooks/firestore';
 import { useCollection } from "react-firebase-hooks/firestore";
-import * as utils from "../utils";
 import GameRoom from "./GameRoom";
 
 jest.mock('react-firebase-hooks/firestore', () => ({
   useCollection: jest.fn()
 }));
+
+mockRandomSeed();
 
 let messagesSnapshot = []
 let charactersSnapshot = []
@@ -280,7 +281,7 @@ describe("Commands", () => {
       "nonexisting 1d20", 
       ["player2 1d20", "PLAYER2, roll 1d20!"], 
     ], 
-  ])("/%p common Request validations", (
+  ])("/%p common Request tests", (
     command, 
     correctArgs, 
     nonExistingPlayerArgs,
@@ -348,7 +349,7 @@ describe("Commands", () => {
       "askroll",
       "player1 3d8"
     ]
-  ])("/%p common Roll Request validation", (
+  ])("/%p common Roll Request tests", (
     command,
     correctArgs
   ) => {
@@ -422,7 +423,14 @@ describe("Commands", () => {
       null,
       "player1 xx"
     ], 
-  ])("/%p common Arguments validations", (
+    [
+      "roll", 
+      null, 
+      "<die>",
+      null,
+      "xx"
+    ], 
+  ])("/%p common Arguments tests", (
     command, 
     wrongNumericArgs, 
     argsHelpText,
@@ -494,13 +502,14 @@ describe("Commands", () => {
     });
   
     test.each([
-      [19, "success"], 
-      [2, "failure"]
-    ])("A player should be able to roll a %p and make a %p skill check", async (die, outcome) => {
+      [19, "success", 0.9], 
+      [2, "failure", 0.05]
+    ])("A player should be able to roll a %p and make a %p skill check", async (die, outcome, seed) => {
       await sudo("DM");
       await sendAction("/skillcheck player1 str 20");
       await sudo("player1");
-      await roll(die);
+      mockRandomSeed(seed);
+      await roll();
       
       const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
@@ -510,6 +519,7 @@ describe("Commands", () => {
         `${die} + 4 = ${die + 4}\n` +
         `It's a ${outcome}!`
       );
+      mockRandomSeed();
     });
 
     test("If there is a resolved skill check, the DM should be able to ask another one to the same player", async () => {
@@ -639,7 +649,7 @@ describe("Commands", () => {
       await sudo("DM");
       await sendAction("/askroll player1 5d6");
       await sudo("player1");
-      await roll(3);
+      await roll();
       
       const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
@@ -666,20 +676,22 @@ describe("Commands", () => {
 
   });
 
-  // describe("/roll", () => {
+  describe("/roll", () => {
 
-  //   test("When a DM tries to roll some wrong dice, he should receive an error message", async () => {
-  //     await sudo("DM");
-  //     await sendAction("/roll xx");
+    test("The DM should be able to roll some dice", async () => {
+      await sudo("DM");
+      await sendAction("/roll 3d6");
 
-  //     const messages = screen.queryAllByTestId("message");
-  //     expect(messages.length).toBe(1);
-  //     expect(messagesSnapshot[0].data().type).toBe("chat");
-  //     expect(messagesSnapshot[0].data().private).toBe(true);
-  //     expect(messagesSnapshot[0].data().text).toBe("!!! Unknown dice: xx !!!");
-  //   });
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().text).toBe(
+        "DUNGEON MASTER rolled 3d6!\n" +
+        "3 + 3 + 3 = 9"
+      );
+    });
 
-  // });
+  });
 
 });
 
@@ -746,6 +758,10 @@ function updateUseCollectionMock() {
   }]);
 }
 
+function mockRandomSeed(n = 0.4) {
+  global.Math.random = () => n;
+}
+
 async function sudo(name) {
   if (name == "DM") {
     user.uid = dungeonMasterUid;
@@ -766,7 +782,6 @@ const sendAction = async (text) => act(async () => {
 });
 
 const roll = async (n = 10) => act(async () => { 
-  utils.d = (_) => n;
   userEvent.click(screen.getByTestId("roll"));
   await rerender(); // click doesn't trigger rerender for some reason
 });

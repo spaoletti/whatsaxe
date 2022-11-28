@@ -47,6 +47,21 @@ export function parseRoll(rollString) {
   return { howManyTimes, diceType };
 }
 
+export function roll(rollExp) {
+  const { howManyTimes, diceType } = parseRoll(rollExp);
+  let total = 0;
+  let rolls = "";
+  for (let c = 1; c <= howManyTimes; c++) {
+    const roll = d(diceType);
+    total += roll;
+    rolls += `${roll} + `;
+  }
+  return { 
+    total, 
+    rolls: rolls.slice(0, -3)
+  };
+}
+
 // --------------------------------------- characters ---------------------------------------
 
 const stats = ["str", "dex", "con", "int", "wis", "cha"];
@@ -78,7 +93,8 @@ const commands = {
   skillcheck: buildSkillCheckMessage,
   hit: buildHitMessage,
   heal: buildHealMessage,
-  askroll: buildAskRollMessage
+  askroll: buildAskRollMessage,
+  roll: buildRollMessage
 }
 
 export function buildMessage(text, type, user, characters, messages) {
@@ -184,6 +200,21 @@ function buildAskRollMessage(command, characters, user, messages) {
     character,
     user
   );
+}
+
+function buildRollMessage(command, _, user) {
+  validateSyntax(command, 1, "/roll <die>");
+  const rollExp = command.args[0];
+  validateDice(rollExp);
+  const { total, rolls } = roll(rollExp);
+  const text = 
+    `DUNGEON MASTER rolled ${rollExp}!\n` +
+    `${rolls} = ${total}`;
+  return {
+    text,
+    photoURL: user.photoURL,
+    type: "chat"
+  };
 }
 
 const commandMessage = (text, command, character, user) => ({

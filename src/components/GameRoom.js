@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { deleteChats, getSnaphotData, resolveRequest, saveMessage, updateCharacterHp } from "../repository";
-import { buildMessage, parseRoll, d, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isCommandName, isCommandUnresolved, isDead, isFromTheDM, isPlayer } from "../utils";
+import { buildMessage, d, getCharacterByUid, getLastAction, getLastRequest, getModifierForStat, isCommandName, isCommandUnresolved, isDead, isFromTheDM, isPlayer, roll } from "../utils";
 
 import ChatMessage from "./ChatMessage";
 
@@ -74,17 +74,10 @@ export default function GameRoom(props) {
 
   function rollDice(rollRequest) {
     const rollExp = rollRequest.command.args[1];
-    const { howManyTimes, diceType } = parseRoll(rollExp);
-    let total = 0;
-    let rolls = "";
-    for (let c = 1; c <= howManyTimes; c++) {
-      const roll = d(diceType);
-      total += roll;
-      rolls += `${roll} + `;
-    }
+    const { total, rolls } = roll(rollExp);
     const message = 
       `${playerCharacter.name.toUpperCase()} rolled ${rollExp}!\n` +
-      `${rolls.slice(0, -3)} = ${total}`;
+      `${rolls} = ${total}`;
     resolveRequest(messagesRef, rollRequest);
     sendMessage("chat", message);  
   }
