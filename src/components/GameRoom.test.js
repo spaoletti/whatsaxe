@@ -259,33 +259,28 @@ describe("Commands", () => {
   describe.each([
     [
       "skillcheck", 
-      "player1 str 20", 
-      "nonexisting str 20", 
-      ["player2 str 20", "PLAYER2, make a STR skill check! (DC 20)"], 
+      "str 20", 
+      "make a STR skill check! (DC 20)" 
     ], 
     [
       "hit", 
-      "player1 30", 
-      "nonexisting 3", 
-      ["player2 30", "PLAYER2, you lost 30 hit points!"], 
+      "30", 
+      "you lost 30 hit points!" 
     ],
     [
       "heal", 
-      "player1 5", 
-      "nonexisting 5", 
-      ["player2 2", "PLAYER2, you gained 2 hit points!"], 
+      "5", 
+      "you gained 5 hit points!"
     ], 
     [
       "askroll", 
-      "player1 1d20", 
-      "nonexisting 1d20", 
-      ["player2 1d20", "PLAYER2, roll 1d20!"], 
+      "1d20", 
+      "roll 1d20!" 
     ], 
   ])("/%p common Request tests", (
     command, 
     correctArgs, 
-    nonExistingPlayerArgs,
-    anotherPlayerArgs, 
+    requestMessage
   ) => {
 
     test("The DM can't target a dead player", async () => {
@@ -294,7 +289,7 @@ describe("Commands", () => {
       await sudo("player1");
       await rerender();
       await sudo("DM");
-      await sendAction(`/${command} ${correctArgs}`);
+      await sendAction(`/${command} player1 ${correctArgs}`);
   
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(3);
@@ -305,7 +300,7 @@ describe("Commands", () => {
 
     test("When a DM targets a non existing player, he should receive an error message", async () => {
       await sudo("DM");
-      await sendAction(`/${command} ${nonExistingPlayerArgs}`);
+      await sendAction(`/${command} nonexisting ${correctArgs}`);
     
       const messages = screen.queryAllByTestId("message");
       expect(messages.length).toBe(1);
@@ -317,7 +312,7 @@ describe("Commands", () => {
     test("If there is a request pending for a player, the DM should NOT be able to target him", async () => {
       await sudo("DM");
       await sendAction("/skillcheck player1 dex 20");
-      await sendAction(`/${command} ${correctArgs}`);
+      await sendAction(`/${command} player1 ${correctArgs}`);
 
       const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
@@ -328,26 +323,47 @@ describe("Commands", () => {
 
     test("If there is a request pending, the DM should be able to target another player", async () => {
       await sudo("DM");
-      await sendAction(`/${command} ${correctArgs}`);
-      await sendAction(`/${command} ${anotherPlayerArgs[0]}`);
+      await sendAction(`/${command} player1 ${correctArgs}`);
+      await sendAction(`/${command} player2 ${correctArgs}`);
 
       const messages = screen.queryAllByTestId("message");    
       expect(messages.length).toBe(2);
       expect(messagesSnapshot[1].data().type).toBe("chat");
-      expect(messagesSnapshot[1].data().text).toBe(anotherPlayerArgs[1]);
+      expect(messagesSnapshot[1].data().text).toBe(`PLAYER2, ${requestMessage}`);
       expect(messagesSnapshot[1].data().target).toBe("def");
     });
+
+    test("The DM should be able to target a player using only her initials", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} g ${correctArgs}`);
+
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().text).toBe(`GERARDO BRANZONI, ${requestMessage}`);
+    })
+
+    test("If the initials of a player are wrong, it throws an error", async () => {
+      await sudo("DM");
+      await sendAction(`/${command} xx ${correctArgs}`);
+    
+      const messages = screen.queryAllByTestId("message");
+      expect(messages.length).toBe(1);
+      expect(messagesSnapshot[0].data().type).toBe("chat");
+      expect(messagesSnapshot[0].data().private).toBe(true);
+      expect(messagesSnapshot[0].data().text).toBe("!!! Invalid target: xx !!!");
+    })
 
   });
 
   describe.each([
     [
       "skillcheck",
-      "player1 str 20"
+      "str 20"
     ],
     [
       "askroll",
-      "player1 3d8"
+      "3d8"
     ]
   ])("/%p common Roll Request tests", (
     command,
@@ -356,7 +372,7 @@ describe("Commands", () => {
 
     test("A player asked for a roll should be able to see the roll button", async () => {
       await sudo("DM");
-      await sendAction(`/${command} ${correctArgs}`);
+      await sendAction(`/${command} player1 ${correctArgs}`);
       await sudo("player1");      
 
       const rollButton = screen.queryByTestId("roll");
@@ -365,7 +381,7 @@ describe("Commands", () => {
 
     test("ONLY the player asked for a roll should be able to see the roll button", async () => {
       await sudo("DM");
-      await sendAction(`/${command} ${correctArgs}`);
+      await sendAction(`/${command} player1 ${correctArgs}`);
       await sudo("player2");    
 
       const rollButton = screen.queryByTestId("roll");
@@ -374,7 +390,7 @@ describe("Commands", () => {
 
     test("Rolling the dice should resolve the pending roll request", async () => {
       await sudo("DM");
-      await sendAction(`/${command} ${correctArgs}`);
+      await sendAction(`/${command} player1 ${correctArgs}`);
       await sudo("player1");
       await roll();
 
@@ -385,7 +401,7 @@ describe("Commands", () => {
 
     test("The player should not see the roll button if the last roll request is resolved", async () => {
       await sudo("DM");
-      await sendAction(`/${command} ${correctArgs}`);
+      await sendAction(`/${command} player1 ${correctArgs}`);
       await sudo("player1");
       await roll();
 
@@ -460,7 +476,7 @@ describe("Commands", () => {
       expect(messagesSnapshot[0].data().text).toBe(`!!! ${wrongNumericArgs[1]} must be a number. Provided: xx !!!`);
     });
 
-    testif(wrongStatArgs)("When a DM asks a player to make a skill check on a wrong stat, he should receive an error message", async () => {
+    testif(wrongStatArgs)("If stat arguments are not valid stats, he should receive an error message", async () => {
       await sudo("DM");
       await sendAction(`/${command} ${wrongStatArgs}`);
     
@@ -471,7 +487,7 @@ describe("Commands", () => {
       expect(messagesSnapshot[0].data().text).toBe("!!! Unknown stat: xxx !!!");
     });
 
-    testif(wrongDiceArgs)("When a DM asks a player to roll some wrong dice, he should receive an error message", async () => {
+    testif(wrongDiceArgs)("If dice arguments are not valid dice, he should receive an error message", async () => {
       await sudo("DM");
       await sendAction(`/${command} ${wrongDiceArgs}`);
 
@@ -724,19 +740,28 @@ function initFirestore() {
       })
     },
     {
-      data: () => (
-        { name: "player2", uid: "def" }
-      )
+      data: () => ({ 
+        name: "player2", uid: "def" 
+      })
     },
     {
-      data: () => (
-        { name: "player3", uid: "def" }
-      )
+      data: () => ({ 
+        name: "player3", uid: "ghi" 
+      })
     },
     {
-      data: () => (
-        { name: "player4", uid: "def" }
-      )
+      data: () => ({
+        name: "Gerardo Branzoni",
+        uid: "jkl",
+        str: 18,
+        dex: 8,
+        con: 6,
+        int: 24,
+        wis: 12,
+        cha: 10,
+        hp: 15,
+        maxhp: 15
+      })
     },
   ]  
   updateUseCollectionMock();

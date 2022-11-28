@@ -75,8 +75,8 @@ export function getModifier(statValue) {
   return Math.floor((statValue - 10) / 2);
 }
 
-function getCharacterByName(characters, name) {
-  return characters.find(c => c.name.toLowerCase() === name.toLowerCase());
+function getCharacterByInitials(characters, initials) {
+  return characters.find(c => c.name.toLowerCase().startsWith(initials.toLowerCase()));
 }
 
 export function getCharacterByUid(characters, uid) {
@@ -143,7 +143,7 @@ export function isCommandUnresolved(commandName, request) {
 
 function buildSkillCheckMessage(command, characters, user, messages) {
   validateSyntax(command, 3, "/skillcheck <player_name> <stat> <DC>");
-  const character = getCharacterByName(characters, command.args[0]);
+  const character = getCharacterByInitials(characters, command.args[0]);
   validateTarget(character, command.args[0]);
   validateStat(command.args[1]);
   validateNumber(command.args[2], "DC");
@@ -159,7 +159,7 @@ function buildSkillCheckMessage(command, characters, user, messages) {
 
 function buildHitMessage(command, characters, user, messages) {
   validateSyntax(command, 2, "/hit <player_name> <hp>");
-  const character = getCharacterByName(characters, command.args[0]);
+  const character = getCharacterByInitials(characters, command.args[0]);
   validateTarget(character, command.args[0]);
   validateNumber(command.args[1], "Hit Points");
   const lastRequest = getLastRequest(messages, character);
@@ -174,7 +174,7 @@ function buildHitMessage(command, characters, user, messages) {
 
 function buildHealMessage(command, characters, user, messages) {
   validateSyntax(command, 2, "/heal <player_name> <hp>");
-  const character = getCharacterByName(characters, command.args[0]);
+  const character = getCharacterByInitials(characters, command.args[0]);
   validateTarget(character, command.args[0]);
   validateNumber(command.args[1], "Hit Points");
   const lastRequest = getLastRequest(messages, character);
@@ -189,7 +189,7 @@ function buildHealMessage(command, characters, user, messages) {
 
 function buildAskRollMessage(command, characters, user, messages) {
   validateSyntax(command, 2, "/askroll <player_name> <die>");
-  const character = getCharacterByName(characters, command.args[0]);
+  const character = getCharacterByInitials(characters, command.args[0]);
   validateTarget(character, command.args[0]);
   validateDice(command.args[1]);
   const lastRequest = getLastRequest(messages, character);
